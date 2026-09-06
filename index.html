@@ -56,16 +56,38 @@ window.adminLogin = async function(){
   const password = document.getElementById('adminPasswordInput').value;
   const err = document.getElementById('loginError');
   const btn = document.querySelector('#adminGate .btn');
+
   err.textContent = '';
-  if (!email || !password) { err.textContent = 'Enter admin email and password.'; return; }
+
+  if (!email || !password) {
+    err.textContent = 'Enter admin email and password.';
+    return;
+  }
+
   btn.disabled = true;
   btn.textContent = 'Signing in...';
+
   try {
-    await signInWithEmailAndPassword(auth, email, password);
+    const loginPromise = signInWithEmailAndPassword(auth, email, password);
+
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error(
+        'Firebase login timed out after 15 seconds. The browser could not complete the Firebase Authentication request.'
+      )), 15000)
+    );
+
+    await Promise.race([loginPromise, timeoutPromise]);
+
     btn.textContent = 'Login successful...';
+
   } catch (e) {
     console.error('CREDENCE admin login error:', e);
-    err.textContent = e?.code ? (e.code + ': ' + (e.message || 'Login failed.')) : (e?.message || 'Admin login failed.');
+
+    err.textContent =
+      e?.code
+        ? e.code + ': ' + (e.message || 'Login failed.')
+        : (e?.message || 'Admin login failed.');
+
     btn.disabled = false;
     btn.textContent = 'Login as Admin';
   }
