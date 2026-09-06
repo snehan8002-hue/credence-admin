@@ -59,7 +59,7 @@ service cloud.firestore {
         && hasStudentFields(request.resource.data)
         && request.resource.data.createdAt == resource.data.createdAt
         && request.resource.data.updatedAt == request.time;
-      allow delete: if false;
+      allow delete: if isSuperAdmin();
     }
 
     match /notes/{noteId} {
