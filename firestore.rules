@@ -16,6 +16,15 @@ service cloud.firestore {
           && get(/databases/$(database)/documents/superAdmins/$(request.auth.uid)).data.active == true);
     }
 
+    function isStudentOwner(data) {
+      return signedIn()
+        && data.active == true
+        && (
+          (request.auth.token.email != null && data.email == request.auth.token.email)
+          || (request.auth.token.phone_number != null && data.phone == request.auth.token.phone_number)
+        );
+    }
+
     function hasStudentFields(data) {
       return data.keys().hasAll(['name', 'rollNo', 'className', 'phone', 'email', 'active', 'createdAt', 'updatedAt'])
         && data.keys().hasOnly(['name', 'rollNo', 'className', 'phone', 'email', 'active', 'createdAt', 'updatedAt'])
@@ -48,8 +57,9 @@ service cloud.firestore {
     }
 
     match /students/{studentId} {
-      allow get: if isSuperAdmin()
-        || (signedIn() && resource.data.email == request.auth.token.email);
+      // Students can only read their own ACTIVE record using a verified Firebase email or phone claim.
+      allow get: if isSuperAdmin() || isStudentOwner(resource.data);
+      // Student lists are admin-only so a student cannot enumerate other students.
       allow list: if isSuperAdmin();
       allow create: if isSuperAdmin()
         && hasStudentFields(request.resource.data)
