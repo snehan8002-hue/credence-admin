@@ -88,14 +88,6 @@ window.adminLogin = async function(){
   btn.disabled = false;
   btn.textContent = 'Login as Admin';
 }
-  console.error('CREDENCE admin login error:', e);
-  err.textContent = e?.code
-    ? e.code + ': ' + (e.message || 'Login failed.')
-    : (e?.message || 'Admin login failed.');
-
-  btn.disabled = false;
-  btn.textContent = 'Login as Admin';
-}
     console.error('CREDENCE admin login error:', e);
 
     err.textContent =
