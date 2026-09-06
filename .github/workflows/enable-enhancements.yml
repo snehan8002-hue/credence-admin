@@ -25,7 +25,8 @@ jobs:
           text = p.read_text(encoding='utf-8')
           markers = [
               '<script src="enhancements.js"></script>',
-              '<script src="enhancements-fixes.js"></script>'
+              '<script src="enhancements-fixes.js"></script>',
+              '<script src="auth-hardening.js"></script>'
           ]
           changed = False
           for marker in markers:
@@ -33,7 +34,7 @@ jobs:
                   text = text.replace('</head>', marker + '\n</head>', 1)
                   changed = True
           p.write_text(text, encoding='utf-8')
-          print('Admin enhancement scripts checked.')
+          print('CREDENCE enhancement scripts checked.')
           PY
 
       - name: Commit and push if changed
@@ -46,5 +47,5 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add index.html
-          git commit -m 'Add CREDENCE admin fixes'
+          git commit -m 'Harden CREDENCE login validation'
           git push
