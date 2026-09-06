@@ -64,11 +64,10 @@ window.adminLogin = async function(){
     return;
   }
 
-  btn.disabled = true;
-  btn.textContent = 'Signing in...';
+btn.disabled = true;
+btn.textContent = 'Signing in...';
 
-  try {
-  try {
+try {
   const loginPromise = signInWithEmailAndPassword(auth, email, password);
 
   const timeoutPromise = new Promise((_, reject) =>
