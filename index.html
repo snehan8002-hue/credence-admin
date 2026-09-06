@@ -68,19 +68,29 @@ window.adminLogin = async function(){
   btn.textContent = 'Signing in...';
 
   try {
-    const loginPromise = signInWithEmailAndPassword(auth, email, password);
+  try {
+  const loginPromise = signInWithEmailAndPassword(auth, email, password);
 
-    const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error(
-        'Firebase login timed out after 15 seconds.'
-      )), 15000)
-    );
+  const timeoutPromise = new Promise((_, reject) =>
+    setTimeout(() => reject(new Error(
+      'Firebase login timed out after 15 seconds.'
+    )), 15000)
+  );
 
-    await Promise.race([loginPromise, timeoutPromise]);
+  await Promise.race([loginPromise, timeoutPromise]);
 
-    btn.textContent = 'Login successful...';
+  btn.textContent = 'Login successful...';
 
-  } catch (e) {
+} catch (e) {
+  console.error('CREDENCE admin login error:', e);
+
+  err.textContent = e?.code
+    ? e.code + ': ' + (e.message || 'Login failed.')
+    : (e?.message || 'Admin login failed.');
+
+  btn.disabled = false;
+  btn.textContent = 'Login as Admin';
+} catch (e) {
     console.error('CREDENCE admin login error:', e);
 
     err.textContent = e?.code
