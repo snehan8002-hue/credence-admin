@@ -1,0 +1,44 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return signedIn() && request.auth.uid == 'aBYdbFwbsTUbpmYtoNurxyu3Roj2';
+    }
+
+    function hasStudentFields(data) {
+      return data.keys().hasAll(['name', 'rollNo', 'className', 'phone', 'email', 'active', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['name', 'rollNo', 'className', 'phone', 'email', 'active', 'createdAt', 'updatedAt'])
+        && data.name is string
+        && data.rollNo is string
+        && data.className is string
+        && data.phone is string
+        && data.email is string
+        && data.active is bool
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    match /students/{studentId} {
+      allow get: if isAdmin()
+        || (signedIn() && resource.data.email == request.auth.token.email);
+      allow list: if isAdmin();
+      allow create: if isAdmin()
+        && hasStudentFields(request.resource.data)
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time;
+      allow update: if isAdmin()
+        && hasStudentFields(request.resource.data)
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.updatedAt == request.time;
+      allow delete: if false;
+    }
+
+    match /notes/{noteId} {
+      allow read, write: if isAdmin();
+    }
+  }
+}
