@@ -16,20 +16,24 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Load enhancements into admin page
+      - name: Load admin enhancement scripts
         shell: bash
         run: |
           python - <<'PY'
           from pathlib import Path
           p = Path('index.html')
           text = p.read_text(encoding='utf-8')
-          marker = '<script src="enhancements.js"></script>'
-          if marker not in text:
-              text = text.replace('</head>', marker + '\n</head>', 1)
-              p.write_text(text, encoding='utf-8')
-              print('Enhancements script enabled.')
-          else:
-              print('Enhancements script already enabled.')
+          markers = [
+              '<script src="enhancements.js"></script>',
+              '<script src="enhancements-fixes.js"></script>'
+          ]
+          changed = False
+          for marker in markers:
+              if marker not in text:
+                  text = text.replace('</head>', marker + '\n</head>', 1)
+                  changed = True
+          p.write_text(text, encoding='utf-8')
+          print('Admin enhancement scripts checked.')
           PY
 
       - name: Commit and push if changed
@@ -42,5 +46,5 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add index.html
-          git commit -m 'Enable CREDENCE admin enhancements'
+          git commit -m 'Add CREDENCE admin fixes'
           git push
