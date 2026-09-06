@@ -1,0 +1,46 @@
+name: Enable CREDENCE Admin Enhancements
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch-index:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Load enhancements into admin page
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          text = p.read_text(encoding='utf-8')
+          marker = '<script src="enhancements.js"></script>'
+          if marker not in text:
+              text = text.replace('</head>', marker + '\n</head>', 1)
+              p.write_text(text, encoding='utf-8')
+              print('Enhancements script enabled.')
+          else:
+              print('Enhancements script already enabled.')
+          PY
+
+      - name: Commit and push if changed
+        shell: bash
+        run: |
+          if git diff --quiet -- index.html; then
+            echo 'No index change needed.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git commit -m 'Enable CREDENCE admin enhancements'
+          git push
