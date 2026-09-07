@@ -13,6 +13,60 @@ function wireCustomize(){document.querySelectorAll('.mobilebar button').forEach(
 function paymentView(){return [...document.querySelectorAll('.view')].find(v=>v.classList.contains('active')&&/payments?/i.test(text(v.querySelector('h1,h2,h3')||v)))}
 function wirePaymentBack(){const v=paymentView();let b=document.getElementById('credencePaymentBack');if(!b){b=document.createElement('button');b.id='credencePaymentBack';b.type='button';b.setAttribute('aria-label','Back to Home');b.textContent='‹';document.body.appendChild(b);b.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();const home=[...document.querySelectorAll('.mobilebar button,.nav button')].find(x=>/^home$/i.test(text(x)));if(home)home.click();else{document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));document.getElementById('dashboard')?.classList.add('active')}})}b.style.display=v?'grid':'none'}
 function patch(){addStyle();hideHomeExtras();buildMenu();wireCustomize();wirePaymentBack()}
-function start(){patch();let n=0;const t=setInterval(()=>{patch();if(++n>30)clearInterval(t)},400)}
+
+/* FINAL AUTH DIAGNOSTIC LOGIN
+   This is loaded after the other admin scripts, so it is the final login handler.
+   It authenticates the known admin UID and reports the real Firebase error instead
+   of leaving the button stuck on "Signing in...". */
+function installFinalAuth(){
+  if(window.__credenceFinalAuthInstalled)return;
+  const fb=window.credenceFirebase;
+  if(!fb || !fb.auth || !fb.signInWithEmailAndPassword)return false;
+  window.__credenceFinalAuthInstalled=true;
+  window.adminLogin=async function(){
+    const emailEl=document.getElementById('adminEmailInput');
+    const passEl=document.getElementById('adminPasswordInput');
+    const err=document.getElementById('loginError');
+    const btn=document.querySelector('#adminGate .btn');
+    const email=(emailEl?.value||'').trim();
+    const password=passEl?.value||'';
+    if(!email||!password){if(err)err.textContent='Enter admin email and password.';return;}
+    if(btn){btn.disabled=true;btn.textContent='Signing in...';}
+    if(err)err.textContent='';
+    try{
+      const cred=await Promise.race([
+        fb.signInWithEmailAndPassword(fb.auth,email,password),
+        new Promise((_,reject)=>setTimeout(()=>reject(Object.assign(new Error('Firebase login timed out after 15 seconds.'),{code:'auth/timeout'})),15000))
+      ]);
+      const user=cred.user;
+      if(!user || user.uid!==fb.ADMIN_UID){
+        if(err)err.textContent='Signed in, but this account is not the configured CREDENCE admin. UID: '+(user?.uid||'unknown');
+        try{await fb.signOut(fb.auth)}catch(_e){}
+        if(btn){btn.disabled=false;btn.textContent='Login as Admin';}
+        return;
+      }
+      if(err)err.textContent='';
+      const gate=document.getElementById('adminGate'),shell=document.getElementById('appShell'),who=document.getElementById('adminEmail');
+      if(gate)gate.style.display='none';
+      if(shell)shell.style.display='block';
+      if(who)who.textContent=user.email||'Firebase Admin';
+      if(btn){btn.disabled=false;btn.textContent='Login as Admin';}
+    }catch(e){
+      console.error('CREDENCE final admin login error:',e);
+      let message=e?.message||'Firebase login failed.';
+      if(e?.code==='auth/timeout')message='Firebase login timed out after 15 seconds. Check the network and Firebase Auth configuration.';
+      if(e?.code==='auth/unauthorized-domain')message='Firebase blocked this website domain. Add the current GitHub Pages domain to Firebase Authentication → Settings → Authorized domains.';
+      if(e?.code==='auth/invalid-credential')message='Invalid email or password. Firebase rejected the credentials.';
+      if(e?.code==='auth/user-not-found')message='No Firebase Authentication user exists for this email.';
+      if(e?.code==='auth/wrong-password')message='The Firebase password is incorrect.';
+      if(e?.code==='auth/invalid-email')message='The admin email address is invalid.';
+      if(e?.code==='auth/network-request-failed')message='Firebase could not reach the network. Check the connection and try again.';
+      if(err)err.textContent=(e?.code?e.code+': ':'')+message;
+      if(btn){btn.disabled=false;btn.textContent='Login as Admin';}
+    }
+  };
+  return true;
+}
+function start(){patch();let n=0;const t=setInterval(()=>{patch();installFinalAuth();if(++n>30)clearInterval(t)},400);installFinalAuth()}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
