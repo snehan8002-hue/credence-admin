@@ -15,7 +15,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Remove conflicting student scripts and install stable UI fixes
+      - name: Remove conflicting student scripts and install stable business modules
         shell: bash
         run: |
           python - <<'PY'
@@ -23,48 +23,24 @@ jobs:
           import re
           p=Path('index.html')
           text=p.read_text(encoding='utf-8')
-          version='20260907-business-1'
+          version='20260907-business-2'
 
-          # Remove every experimental student handler. The final management script below
-          # is the only student UI that should remain active.
           text=re.sub(r'<script(?: defer)? src="student-(?:controls-fix|management-override|editor-fix)\.js(?:\?v=[^"]+)?"></script>\s*', '', text)
           text=re.sub(r'<script(?: defer)? src="student-navigation-fix\.js(?:\?v=[^"]+)?"></script>\s*', '', text)
 
-          # Keep stable enhancement scripts fresh and ensure UI fixes are loaded.
-          for name in ['enhancements.js','enhancements-fixes.js','auth-hardening.js','ui-final-fixes.js']:
+          for name in ['enhancements.js','enhancements-fixes.js','auth-hardening.js','ui-final-fixes.js','student-final-management.js','business-modules.js']:
               tag=f'<script defer src="{name}?v={version}"></script>'
               pattern=r'<script(?: defer)? src="'+re.escape(name)+r'(?:\?v=[^"]+)?"></script>'
               text,n=re.subn(pattern,tag,text)
               if not n and tag not in text:
                   text=text.replace('</head>',tag+'\n</head>',1)
 
-          # Ensure final student management is loaded once.
-          name='student-final-management.js'
-          tag=f'<script defer src="{name}?v={version}"></script>'
-          text=re.sub(r'<script(?: defer)? src="'+re.escape(name)+r'(?:\?v=[^"]+)?"></script>\s*','',text)
-          text=text.replace('</head>',tag+'\n</head>',1)
-
-          # Business-level admin access: the primary admin OR an active superAdmins record
-          # may pass the client-side gate. Firestore rules remain the authoritative backend check.
           text=text.replace(
-              'import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";',
+              'import { getFirestore, doc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";',
               'import { getFirestore, doc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";'
           )
-          text=text.replace(
-              'onAuthStateChanged(auth, (user) => {',
-              "async function isActiveSuperAdmin(uid){ if(uid===ADMIN_UID) return true; try{ const s=await getDoc(doc(db,'superAdmins',uid)); return s.exists() && s.data().active===true; }catch(e){ console.error('Admin authorization check failed:',e); return false; } }\n\nonAuthStateChanged(auth, async (user) => {"
-          )
-          text=text.replace(
-              'if (user && user.uid === ADMIN_UID) {',
-              'if (user && await isActiveSuperAdmin(user.uid)) {'
-          )
-          text=text.replace(
-              'Only the authorized Firebase admin account can access this panel.',
-              'Only an active CREDENCE Super Admin account can access this panel.'
-          )
-
           p.write_text(text,encoding='utf-8')
-          print('CREDENCE business-level admin access and stable UI scripts installed.')
+          print('CREDENCE stable student, UI, Classes and Fees modules installed.')
           PY
       - name: Commit and push if changed
         shell: bash
@@ -73,5 +49,5 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add index.html
-          git commit -m 'Enable active Super Admin access and finalize UI fixes'
+          git commit -m 'Add business Classes and Fees management modules'
           git push
