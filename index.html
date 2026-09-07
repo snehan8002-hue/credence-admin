@@ -98,6 +98,16 @@ window.adminLogout = async function(){
   await signOut(auth);
 };
 </script>
+<style id="credence-dashboard-final-style">/* CREDENCE_DASHBOARD_FINAL_15 */
+#credenceFinalMoreWrap{position:absolute;left:0;top:0;z-index:1000}
+#credenceFinalMoreBtn{width:42px;height:42px;border:1px solid #e1eae4;border-radius:12px;background:#fff;color:#17352a;font-size:25px;line-height:1;display:grid;place-items:center;cursor:pointer;box-shadow:0 4px 14px rgba(10,70,40,.08);padding:0}
+#credenceFinalMoreMenu{position:absolute;left:0;top:49px;width:190px;background:#fff;border:1px solid #e1eae4;border-radius:14px;box-shadow:0 12px 30px rgba(10,70,40,.14);padding:7px;display:none}
+#credenceFinalMoreMenu.show{display:block}
+#credenceFinalMoreMenu button{width:100%;border:0;background:#fff;text-align:left;border-radius:10px;padding:12px 11px;color:#17352a;font-weight:800;font-size:14px;cursor:pointer}
+@media(max-width:650px){#credenceFinalMoreWrap{left:0;top:-52px}.top{position:relative}}
+</style>
+<script>(function(){'use strict';function start(){var dash=document.getElementById('dashboard');if(!dash)return;dash.querySelectorAll('.section').forEach(function(sec){var h=sec.querySelector('h2'),t=(h&&h.textContent||'').replace(/\s+/g,' ').trim();if(/^quick\s*actions$/i.test(t)){sec.remove();return}if(/^today[’']s\s+live\s+classes$/i.test(t)){sec.querySelectorAll('button').forEach(function(b){if(/^\+?\s*add\s+class$/i.test((b.textContent||'').replace(/\s+/g,' ').trim()))b.remove()})}});var top=document.querySelector('.top');if(!top)return;top.style.position='relative';var w=document.getElementById('credenceFinalMoreWrap');if(!w){w=document.createElement('div');w.id='credenceFinalMoreWrap';w.innerHTML='<button id="credenceFinalMoreBtn" type="button" aria-label="More menu">⋮</button><div id="credenceFinalMoreMenu" role="menu"><button id="credenceFinalSuperAdmin" type="button">🛡️&nbsp; Super Admin</button></div>';top.insertBefore(w,top.firstChild)}var b=document.getElementById('credenceFinalMoreBtn'),m=document.getElementById('credenceFinalMoreMenu'),a=document.getElementById('credenceFinalSuperAdmin');if(!b||!m||!a)return;if(!b.dataset.bound){b.dataset.bound='1';b.onclick=function(e){e.preventDefault();e.stopPropagation();m.classList.toggle('show');b.setAttribute('aria-expanded',m.classList.contains('show'))}}if(!a.dataset.bound){a.dataset.bound='1';a.onclick=function(e){e.preventDefault();e.stopPropagation();m.classList.remove('show');if(typeof window.credenceOpenSuperAdmins==='function')window.credenceOpenSuperAdmins()}}}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();var n=0,t=setInterval(function(){start();if(++n>120)clearInterval(t)},500)})();</script>
+
 <script defer src="performance-stability-fix.js?v=20260907-dashboard-final-15"></script>
 <script defer src="enhancements.js?v=20260907-dashboard-final-15"></script>
 <script defer src="enhancements-fixes.js?v=20260907-dashboard-final-15"></script>
@@ -111,16 +121,6 @@ window.adminLogout = async function(){
 <script defer src="bottom-nav-final.js?v=20260907-dashboard-final-15"></script>
 <script defer src="teacher-unified-final.js?v=20260907-dashboard-final-15"></script>
 <script defer src="dashboard-minimal-menu.js?v=20260907-dashboard-final-15"></script>
-<style id="credence-dashboard-final-style">/* CREDENCE_DASHBOARD_FINAL_15 */
-#credenceFinalMoreWrap{position:absolute;left:0;top:0;z-index:1000}
-#credenceFinalMoreBtn{width:42px;height:42px;border:1px solid #e1eae4;border-radius:12px;background:#fff;color:#17352a;font-size:25px;line-height:1;display:grid;place-items:center;cursor:pointer;box-shadow:0 4px 14px rgba(10,70,40,.08);padding:0}
-#credenceFinalMoreMenu{position:absolute;left:0;top:49px;width:190px;background:#fff;border:1px solid #e1eae4;border-radius:14px;box-shadow:0 12px 30px rgba(10,70,40,.14);padding:7px;display:none}
-#credenceFinalMoreMenu.show{display:block}
-#credenceFinalMoreMenu button{width:100%;border:0;background:#fff;text-align:left;border-radius:10px;padding:12px 11px;color:#17352a;font-weight:800;font-size:14px;cursor:pointer}
-@media(max-width:650px){#credenceFinalMoreWrap{left:0;top:-52px}.top{position:relative}}
-</style>
-<script>(function(){'use strict';function start(){var dash=document.getElementById('dashboard');if(!dash)return;dash.querySelectorAll('.section').forEach(function(sec){var h=sec.querySelector('h2'),t=(h&&h.textContent||'').replace(/\s+/g,' ').trim();if(/^quick\s*actions$/i.test(t)){sec.remove();return}if(/^today[’']s\s+live\s+classes$/i.test(t)){sec.querySelectorAll('button').forEach(function(b){if(/^\+?\s*add\s+class$/i.test((b.textContent||'').replace(/\s+/g,' ').trim()))b.remove()})}});var top=document.querySelector('.top');if(!top)return;top.style.position='relative';var w=document.getElementById('credenceFinalMoreWrap');if(!w){w=document.createElement('div');w.id='credenceFinalMoreWrap';w.innerHTML='<button id="credenceFinalMoreBtn" type="button" aria-label="More menu">⋮</button><div id="credenceFinalMoreMenu" role="menu"><button id="credenceFinalSuperAdmin" type="button">🛡️&nbsp; Super Admin</button></div>';top.insertBefore(w,top.firstChild)}var b=document.getElementById('credenceFinalMoreBtn'),m=document.getElementById('credenceFinalMoreMenu'),a=document.getElementById('credenceFinalSuperAdmin');if(!b||!m||!a)return;if(!b.dataset.bound){b.dataset.bound='1';b.onclick=function(e){e.preventDefault();e.stopPropagation();m.classList.toggle('show');b.setAttribute('aria-expanded',m.classList.contains('show'))}}if(!a.dataset.bound){a.dataset.bound='1';a.onclick=function(e){e.preventDefault();e.stopPropagation();m.classList.remove('show');if(typeof window.credenceOpenSuperAdmins==='function')window.credenceOpenSuperAdmins()}}}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();var n=0,t=setInterval(function(){start();if(++n>120)clearInterval(t)},500)})();</script>
-
 </head>
 <body>
 <div id="adminGate" style="position:fixed;inset:0;background:#f3f7f4;display:flex;align-items:center;justify-content:center;padding:20px;z-index:200">
