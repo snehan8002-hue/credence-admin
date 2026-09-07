@@ -1,8 +1,6 @@
-name: Load CREDENCE mobile reference UI v4
+name: Load CREDENCE mobile reference UI v3
 
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -13,19 +11,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Load reference UI script with cache-busting
+      - name: Load reference UI script
         shell: bash
         run: |
           python - <<'PY'
           from pathlib import Path
           p=Path('index.html')
           t=p.read_text(encoding='utf-8')
+          tag='<script defer src="reference-mobile-v3.js?v=20260908-mobile-fit-18"></script>'
           import re
-          t=re.sub(r'<script defer src="reference-mobile-v3\.js\?v=\d+"></script>', '', t)
-          tag='<script defer src="reference-mobile-v3.js?v=4"></script>'
+          t=re.sub(r'<script[^>]+src=["\']reference-mobile-v3\.js(?:\?v=[^"\']+)?["\'][^>]*></script>\s*','',t,flags=re.I)
           if tag not in t:
-              t=t.replace('</head>', tag+'\n</head>', 1)
-              p.write_text(t, encoding='utf-8')
+              t=t.replace('</head>',tag+'\n</head>',1)
+          p.write_text(t,encoding='utf-8')
           PY
       - name: Commit
         shell: bash
@@ -34,5 +32,5 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add index.html
-          git commit -m 'Load mobile dashboard UI v4'
+          git commit -m 'Load exact-fit mobile reference UI'
           git push
