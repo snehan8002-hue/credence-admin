@@ -1,4 +1,5 @@
 (function(){
+  const PRIMARY_UID='aBYdbFwbsTUbpmYtoNurxyu3Roj2';
   const wait=()=>new Promise(resolve=>{
     const started=Date.now();
     const t=setInterval(()=>{
@@ -9,9 +10,21 @@
 
   wait().then(f=>{
     if(!f)return;
-    const {auth,ADMIN_UID,signInWithEmailAndPassword,signOut}=f;
+    const {auth,ADMIN_UID,signInWithEmailAndPassword,signOut,db}=f;
     const originalLogin=window.adminLogin;
     if(typeof originalLogin!=='function')return;
+
+    async function authorized(uid){
+      if(uid===PRIMARY_UID || uid===ADMIN_UID)return true;
+      try{
+        const {doc,getDoc}=await import('https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js');
+        const s=await getDoc(doc(db,'superAdmins',uid));
+        return s.exists() && s.data().active===true;
+      }catch(e){
+        console.error('CREDENCE admin authorization check failed:',e);
+        return false;
+      }
+    }
 
     window.adminLogin=async function(){
       const emailEl=document.getElementById('adminEmailInput');
@@ -29,7 +42,7 @@
         return;
       }
       if(!email.includes('@')||!email.includes('.')||email.startsWith('@')||email.endsWith('@')){
-        err.textContent='Please enter a valid email address. Phone number login is not available for Admin.';
+        err.textContent='Please enter a valid email address.';
         return;
       }
       if(!password){
@@ -42,9 +55,9 @@
 
       try{
         const cred=await signInWithEmailAndPassword(auth,email,password);
-        if(!cred?.user || cred.user.uid!==ADMIN_UID){
+        if(!cred?.user || !(await authorized(cred.user.uid))){
           await signOut(auth).catch(()=>{});
-          err.textContent='Login denied: this Firebase account is not an authorized CREDENCE admin.';
+          err.textContent='Login denied: this Firebase account is not an active CREDENCE admin.';
           btn.disabled=false;
           btn.textContent='Login as Admin';
           return;
