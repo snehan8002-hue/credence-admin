@@ -22,17 +22,13 @@ jobs:
           import re
           p=Path('index.html')
           text=p.read_text(encoding='utf-8')
-          version='20260907-teacher-controls-10'
-          names=['performance-stability-fix.js','enhancements.js','enhancements-fixes.js','auth-hardening.js','ui-final-fixes.js','student-final-management.js','business-modules.js','test-management.js','results-management.js','notes-management.js','bottom-nav-final.js','teacher-nav-fix.js','teacher-home-final.js','teacher-ui-final.js']
-          for name in names:
-              tag=f'<script defer src="{name}?v={version}"></script>'
-              pattern=r'<script(?: defer)? src="'+re.escape(name)+r'(?:\?v=[^"]+)?"></script>'
-              text,n=re.subn(pattern,tag,text)
-              if not n and tag not in text:
-                  text=text.replace('</head>',tag+'\n</head>',1)
-          text=re.sub(r'<script(?: defer)? src="teacher-final-fix\.js(?:\?v=[^"]+)?"></script>\s*','',text)
-          for name in ['student-controls-fix.js','student-management-override.js','student-editor-fix.js','student-navigation-fix.js']:
-              text=re.sub(r'<script(?: defer)? src="'+re.escape(name)+r'(?:\?v=[^"]+)?"></script>\s*','',text)
+          version='20260907-teacher-unified-11'
+          names=['performance-stability-fix.js','enhancements.js','enhancements-fixes.js','auth-hardening.js','ui-final-fixes.js','student-final-management.js','business-modules.js','test-management.js','results-management.js','notes-management.js','bottom-nav-final.js']
+          for name in names + ['teacher-nav-fix.js','teacher-home-final.js','teacher-ui-final.js','teacher-final-fix.js','teacher-unified-final.js']:
+              text=re.sub(r'<script[^>]+src=["\']'+re.escape(name)+r'(?:\?v=[^"\']+)?["\'][^>]*></script>\s*','',text,flags=re.I)
+          tags='\n'.join(f'<script defer src="{name}?v={version}"></script>' for name in names)
+          tags += f'\n<script defer src="teacher-unified-final.js?v={version}"></script>'
+          text=text.replace('</head>',tags+'\n</head>',1)
           p.write_text(text,encoding='utf-8')
           PY
       - name: Commit and push if changed
@@ -42,5 +38,5 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add index.html
-          git commit -m 'Add teacher enable disable controls and contact fields'
+          git commit -m 'Use unified teacher management controls'
           git push
