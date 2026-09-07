@@ -23,18 +23,25 @@ jobs:
           import re
           p=Path('index.html')
           text=p.read_text(encoding='utf-8')
-          version='20260907-student-clean-5'
-          # Keep only the stable enhancement stack. Remove all experimental student handlers
-          # that were competing for the same Edit button.
-          text=re.sub(r'<script(?: defer)? src="student-(?:controls-fix|management-override|editor-fix)(?:\?v=[^"]+)?"></script>\s*', '', text)
+          version='20260907-student-clean-8'
+          # Remove every experimental student handler. The final management script below
+          # is the only student UI that should remain active.
+          text=re.sub(r'<script(?: defer)? src="student-(?:controls-fix|management-override|editor-fix)\.js(?:\?v=[^"]+)?"></script>\s*', '', text)
+          text=re.sub(r'<script(?: defer)? src="student-navigation-fix\.js(?:\?v=[^"]+)?"></script>\s*', '', text)
+          # Keep the stable core scripts fresh.
           for name in ['enhancements.js','enhancements-fixes.js','auth-hardening.js']:
               tag=f'<script defer src="{name}?v={version}"></script>'
               pattern=r'<script(?: defer)? src="'+re.escape(name)+r'(?:\?v=[^"]+)?"></script>'
               text,n=re.subn(pattern,tag,text)
               if not n and tag not in text:
                   text=text.replace('</head>',tag+'\n</head>',1)
+          # Ensure final student management is loaded once.
+          name='student-final-management.js'
+          tag=f'<script defer src="{name}?v={version}"></script>'
+          text=re.sub(r'<script(?: defer)? src="'+re.escape(name)+r'(?:\?v=[^"]+)?"></script>\s*','',text)
+          text=text.replace('</head>',tag+'\n</head>',1)
           p.write_text(text,encoding='utf-8')
-          print('Removed conflicting student handlers; stable student management is now authoritative.')
+          print('Student handlers cleaned; final management installed.')
           PY
       - name: Commit and push if changed
         shell: bash
@@ -43,5 +50,5 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add index.html
-          git commit -m 'Remove conflicting student handlers'
+          git commit -m 'Install final student management UI'
           git push
