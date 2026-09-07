@@ -13,7 +13,7 @@
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, getIdToken } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js";
-import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
+import { getFirestore, doc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCka8C2otBgwXwT2Qtg5bZcPG3J_84Wgs8",
@@ -32,11 +32,13 @@ const SUPABASE_URL = "https://fofpblqueobdeawwyaep.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_3KTR8_rx2JaFQG_gM6bzww_c5BxFsnv";
 window.credenceFirebase = { auth, db, ADMIN_UID, SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, signInWithEmailAndPassword, signOut, getIdToken, setDoc, doc, serverTimestamp };
 
-onAuthStateChanged(auth, (user) => {
+async function isActiveSuperAdmin(uid){ if(uid===ADMIN_UID) return true; try{ const s=await getDoc(doc(db,'superAdmins',uid)); return s.exists() && s.data().active===true; }catch(e){ console.error('Admin authorization check failed:',e); return false; } }
+
+onAuthStateChanged(auth, async (user) => {
   const gate = document.getElementById('adminGate');
   const appShell = document.getElementById('appShell');
   const who = document.getElementById('adminEmail');
-  if (user && user.uid === ADMIN_UID) {
+  if (user && await isActiveSuperAdmin(user.uid)) {
     gate.style.display = 'none';
     appShell.style.display = 'block';
     who.textContent = user.email || 'Firebase Admin';
@@ -96,11 +98,11 @@ window.adminLogout = async function(){
   await signOut(auth);
 };
 </script>
-<script defer src="enhancements.js?v=20260907-student-clean-9"></script>
-<script defer src="enhancements-fixes.js?v=20260907-student-clean-9"></script>
-<script defer src="auth-hardening.js?v=20260907-student-clean-9"></script>
-<script defer src="ui-final-fixes.js?v=20260907-student-clean-9"></script>
-<script defer src="student-final-management.js?v=20260907-student-clean-9"></script>
+<script defer src="enhancements.js?v=20260907-business-1"></script>
+<script defer src="enhancements-fixes.js?v=20260907-business-1"></script>
+<script defer src="auth-hardening.js?v=20260907-business-1"></script>
+<script defer src="ui-final-fixes.js?v=20260907-business-1"></script>
+<script defer src="student-final-management.js?v=20260907-business-1"></script>
 </head>
 <body>
 <div id="adminGate" style="position:fixed;inset:0;background:#f3f7f4;display:flex;align-items:center;justify-content:center;padding:20px;z-index:200">
@@ -110,7 +112,7 @@ window.adminLogout = async function(){
     <div class="field" style="margin-bottom:14px"><label>Password</label><input id="adminPasswordInput" type="password" placeholder="Password"></div>
     <button type="button" class="btn" style="width:100%" onclick="adminLogin()">Login as Admin</button>
     <div id="loginError" style="color:#d94747;font-size:12px;margin-top:12px"></div>
-    <div class="muted" style="margin-top:14px;text-align:center">Only the authorized Firebase admin account can access this panel.</div>
+    <div class="muted" style="margin-top:14px;text-align:center">Only an active CREDENCE Super Admin account can access this panel.</div>
   </div>
 </div>
 <div id="appShell" style="display:none">
