@@ -4,33 +4,10 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  patch:
+  disabled:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Load reference UI script
-        shell: bash
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          p=Path('index.html')
-          t=p.read_text(encoding='utf-8')
-          tag='<script defer src="reference-mobile-v3.js?v=20260908-mobile-fit-18"></script>'
-          import re
-          t=re.sub(r'<script[^>]+src=["\']reference-mobile-v3\.js(?:\?v=[^"\']+)?["\'][^>]*></script>\s*','',t,flags=re.I)
-          if tag not in t:
-              t=t.replace('</head>',tag+'\n</head>',1)
-          p.write_text(t,encoding='utf-8')
-          PY
-      - name: Commit
-        shell: bash
-        run: |
-          if git diff --quiet -- index.html; then exit 0; fi
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add index.html
-          git commit -m 'Load exact-fit mobile reference UI'
-          git push
+      - run: echo "Legacy UI patch workflow disabled; final UI is managed by enable-enhancements.yml"
