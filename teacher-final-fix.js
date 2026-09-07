@@ -10,26 +10,36 @@ async function superOK(){const f=F(),u=f?.auth?.currentUser;if(!f||!u)return fal
 function homeModal(){return [...document.querySelectorAll('.modal')].find(m=>vis(m)&&/create teacher|teacher name|add teacher/i.test(txt(m)))}
 function labelField(mod,rx){return [...mod.querySelectorAll('.field')].find(f=>rx.test(txt(f.querySelector('label'))))}
 function makeField(label,type,placeholder){const f=document.createElement('div');f.className='field';f.innerHTML='<label>'+label+'</label><input type="'+type+'" placeholder="'+placeholder+'">';return f}
-function moveCreateButtonAfterEmail(m){
- const emailField=labelField(m,/^email$/i);
- const btn=[...m.querySelectorAll('button')].find(b=>/create teacher|add teacher/i.test(txt(b)));
- if(!emailField||!btn)return;
- const parent=emailField.parentElement;
- if(parent){
-   btn.style.marginTop='0';
-   btn.style.marginBottom='0';
-   parent.appendChild(btn);
- }
+function teacherGrid(m){
+  const direct=m.querySelector('.formgrid');
+  if(direct)return direct;
+  const fields=[...m.querySelectorAll('.field')];
+  if(fields.length){
+    let p=fields[0].parentElement;
+    while(p&&p!==m&&!p.classList.contains('modalbox')&&p.querySelectorAll('.field').length<fields.length)p=p.parentElement;
+    return p||fields[0].parentElement||m;
+  }
+  return m.querySelector('.modalbox')||m;
 }
-function patchHome(){const m=homeModal();if(!m)return;
- [...m.querySelectorAll('.field')].forEach(f=>{if(/^classes?$/i.test(txt(f.querySelector('label'))))f.remove()});
- let grid=m.querySelector('.formgrid');
- if(!grid){const first=m.querySelector('input')?.closest('div');const box=m.querySelector('.modalbox')||m;const btn=[...box.querySelectorAll('button')].find(b=>/create teacher|add teacher/i.test(txt(b)));grid=first?.parentElement||box;if(btn&&grid!==box){grid=btn.parentElement||box}}
- if(!grid)return;
- if(!labelField(m,/^phone$/i))grid.appendChild(makeField('Phone','tel','Phone number'));
- if(!labelField(m,/^email$/i))grid.appendChild(makeField('Email','email','teacher@example.com'));
- [...m.querySelectorAll('.field')].forEach(f=>{if(/^classes?$/i.test(txt(f.querySelector('label'))))f.remove()});
- moveCreateButtonAfterEmail(m);
+function reorderTeacherForm(m){
+  const grid=teacherGrid(m); if(!grid)return;
+  const get=rx=>labelField(m,rx);
+  const classes=get(/^classes?$/i); if(classes)classes.remove();
+  let phone=get(/^phone$/i); if(!phone){phone=makeField('Phone','tel','Phone number');grid.appendChild(phone)}
+  let email=get(/^email$/i); if(!email){email=makeField('Email','email','teacher@example.com');grid.appendChild(email)}
+  const name=get(/teacher name|^name$/i);
+  const subject=get(/^subject$/i);
+  const btn=[...m.querySelectorAll('button')].find(b=>/create teacher|add teacher/i.test(txt(b)));
+  const order=[name,subject,phone,email].filter(Boolean);
+  order.forEach(f=>{f.style.gridColumn='1 / -1';grid.appendChild(f)});
+  if(btn){
+    btn.style.gridColumn='1 / -1';
+    btn.style.marginTop='8px';
+    btn.style.marginBottom='0';
+    grid.appendChild(btn);
+  }
+}
+function patchHome(){const m=homeModal();if(!m)return;reorderTeacherForm(m);
  const btn=[...m.querySelectorAll('button')].find(b=>/create teacher|add teacher/i.test(txt(b)));
  if(btn&&!btn.dataset.finalTeacherSave){btn.dataset.finalTeacherSave='1';const b=btn.cloneNode(true);btn.replaceWith(b);b.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();saveHome(m,b)},true)}
 }
