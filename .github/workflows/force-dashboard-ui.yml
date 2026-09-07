@@ -25,20 +25,14 @@ jobs:
           p = Path('index.html')
           text = p.read_text(encoding='utf-8')
 
-          # Remove the Quick Actions heading and its action card from HOME only.
           text = re.sub(
               r'\n\s*<div class="section"><h2>Quick Actions</h2></div>\s*\n\s*<div class="card actions">.*?</div>\s*(?=</section>)',
-              '\n',
-              text,
-              count=1,
-              flags=re.S | re.I,
+              '\n', text, count=1, flags=re.S | re.I
           )
 
-          # Remove Add Class from HOME only; keep Schedule Class on the Classes page.
           text = text.replace(
               '<div><div class="section"><h2>Today\'s Live Classes</h2><button class="btn" onclick="openClass()">+ Add Class</button></div>',
-              '<div><div class="section"><h2>Today\'s Live Classes</h2></div>',
-              1,
+              '<div><div class="section"><h2>Today\'s Live Classes</h2></div>', 1
           )
 
           marker = 'CREDENCE_FORCE_DASHBOARD_UI_V1'
@@ -52,11 +46,7 @@ jobs:
 #credenceForceMoreMenu.show{display:block}
 #credenceForceMoreMenu button{width:100%;border:0;background:#fff;text-align:left;border-radius:10px;padding:12px 11px;color:#17352a;font-weight:800;font-size:14px;cursor:pointer}
 #credenceForceMoreMenu button:hover{background:#e9f7ed;color:#08783f}
-@media(max-width:650px){
-  #dashboard .section:first-of-type{margin-top:0}
-  #credenceForceMoreWrap{left:0;top:-52px}
-  .top{position:relative}
-}
+@media(max-width:650px){#credenceForceMoreWrap{left:0;top:-52px}.top{position:relative}}
 </style>
 <script>
 (function(){
@@ -64,92 +54,40 @@ jobs:
   function install(){
     var dash=document.getElementById('dashboard');
     if(!dash) return false;
-
-    /* Defensive DOM cleanup in case another module recreates the home card. */
     dash.querySelectorAll('.section').forEach(function(sec){
       var h=sec.querySelector('h2');
       var t=(h&&h.textContent||'').replace(/\s+/g,' ').trim();
-      if(/^quick\s*actions$/i.test(t)){
-        sec.remove();
-        return;
-      }
+      if(/^quick\s*actions$/i.test(t)){sec.remove();return;}
       if(/^today[’']s\s+live\s+classes$/i.test(t)){
         sec.querySelectorAll('button').forEach(function(btn){
           if(/^\+?\s*add\s+class$/i.test((btn.textContent||'').replace(/\s+/g,' ').trim())) btn.remove();
         });
       }
     });
-
-    var top=dash.parentElement && dash.parentElement.querySelector('.top');
-    if(!top) top=document.querySelector('.top');
+    var top=document.querySelector('.top');
     if(!top) return true;
     top.style.position='relative';
-
     var wrap=document.getElementById('credenceForceMoreWrap');
     if(!wrap){
       wrap=document.createElement('div');
       wrap.id='credenceForceMoreWrap';
       wrap.innerHTML='<button id="credenceForceMoreBtn" type="button" aria-label="More menu" aria-expanded="false">⋮</button><div id="credenceForceMoreMenu" role="menu"><button id="credenceForceSuperAdmin" type="button" role="menuitem">🛡️&nbsp; Super Admin</button></div>';
       top.insertBefore(wrap,top.firstChild);
-    } else if(wrap.parentElement!==top){
-      top.insertBefore(wrap,top.firstChild);
     }
-
-    var btn=document.getElementById('credenceForceMoreBtn');
-    var menu=document.getElementById('credenceForceMoreMenu');
-    var admin=document.getElementById('credenceForceSuperAdmin');
+    var btn=document.getElementById('credenceForceMoreBtn'), menu=document.getElementById('credenceForceMoreMenu'), admin=document.getElementById('credenceForceSuperAdmin');
     if(!btn||!menu||!admin) return true;
-
-    if(!btn.dataset.bound){
-      btn.dataset.bound='1';
-      btn.addEventListener('click',function(e){
-        e.preventDefault();e.stopPropagation();
-        var show=!menu.classList.contains('show');
-        menu.classList.toggle('show',show);
-        btn.setAttribute('aria-expanded',String(show));
-      });
-    }
-    if(!admin.dataset.bound){
-      admin.dataset.bound='1';
-      admin.addEventListener('click',function(e){
-        e.preventDefault();e.stopPropagation();
-        menu.classList.remove('show');
-        btn.setAttribute('aria-expanded','false');
-        if(typeof window.credenceOpenSuperAdmins==='function') window.credenceOpenSuperAdmins();
-        else setTimeout(function(){if(typeof window.credenceOpenSuperAdmins==='function') window.credenceOpenSuperAdmins();},300);
-      });
-    }
-    if(!document.documentElement.dataset.credenceForceOutside){
-      document.documentElement.dataset.credenceForceOutside='1';
-      document.addEventListener('click',function(e){
-        var w=document.getElementById('credenceForceMoreWrap');
-        if(w && !w.contains(e.target)){
-          var m=document.getElementById('credenceForceMoreMenu');
-          var b=document.getElementById('credenceForceMoreBtn');
-          if(m)m.classList.remove('show');
-          if(b)b.setAttribute('aria-expanded','false');
-        }
-      },true);
-    }
+    if(!btn.dataset.bound){btn.dataset.bound='1';btn.onclick=function(e){e.preventDefault();e.stopPropagation();var show=!menu.classList.contains('show');menu.classList.toggle('show',show);btn.setAttribute('aria-expanded',String(show));};}
+    if(!admin.dataset.bound){admin.dataset.bound='1';admin.onclick=function(e){e.preventDefault();e.stopPropagation();menu.classList.remove('show');if(typeof window.credenceOpenSuperAdmins==='function')window.credenceOpenSuperAdmins();else setTimeout(function(){window.credenceOpenSuperAdmins?.()},300);};}
+    if(!document.documentElement.dataset.credenceForceOutside){document.documentElement.dataset.credenceForceOutside='1';document.addEventListener('click',function(e){var w=document.getElementById('credenceForceMoreWrap');if(w&&!w.contains(e.target)){document.getElementById('credenceForceMoreMenu')?.classList.remove('show');document.getElementById('credenceForceMoreBtn')?.setAttribute('aria-expanded','false');}},true);}
     return true;
   }
-
-  function start(){
-    install();
-    var tries=0;
-    var timer=setInterval(function(){
-      install();
-      if(++tries>=120) clearInterval(timer);
-    },500);
-  }
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',start,{once:true});
-  else start();
+  function start(){install();var tries=0;var timer=setInterval(function(){install();if(++tries>=120)clearInterval(timer);},500);}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
 </script>
 '''
-              text = text.replace('</head>', patch + '\n</head>', 1)
-
-          p.write_text(text, encoding='utf-8')
+              text=text.replace('</head>',patch+'\n</head>',1)
+          p.write_text(text,encoding='utf-8')
           PY
 
       - name: Commit dashboard patch
@@ -157,7 +95,7 @@ jobs:
         run: |
           if git diff --quiet -- index.html; then exit 0; fi
           git config user.name 'github-actions[bot]'
-          git.config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add index.html
           git commit -m 'Apply dashboard UI directly in index'
           git push
