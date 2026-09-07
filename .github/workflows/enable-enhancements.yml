@@ -14,7 +14,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Install stable CREDENCE modules
+      - name: Install stable CREDENCE modules and force dashboard UI
         shell: bash
         run: |
           python - <<'PY'
@@ -22,7 +22,7 @@ jobs:
           import re
           p=Path('index.html')
           text=p.read_text(encoding='utf-8')
-          version='20260907-dashboard-menu-14'
+          version='20260907-dashboard-final-15'
           names=['performance-stability-fix.js','enhancements.js','enhancements-fixes.js','auth-hardening.js','ui-final-fixes.js','student-final-management.js','business-modules.js','test-management.js','results-management.js','notes-management.js','bottom-nav-final.js']
           for name in names + ['teacher-nav-fix.js','teacher-home-final.js','teacher-ui-final.js','teacher-final-fix.js','teacher-unified-final.js','dashboard-minimal-menu.js']:
               text=re.sub(r'<script[^>]+src=["\']'+re.escape(name)+r'(?:\?v=[^"\']+)?["\'][^>]*></script>\s*','',text,flags=re.I)
@@ -30,6 +30,24 @@ jobs:
           tags += f'\n<script defer src="teacher-unified-final.js?v={version}"></script>'
           tags += f'\n<script defer src="dashboard-minimal-menu.js?v={version}"></script>'
           text=text.replace('</head>',tags+'\n</head>',1)
+
+          # Make the requested HOME layout permanent in the HTML itself.
+          text=re.sub(r'\n\s*<div class="section"><h2>Quick Actions</h2></div>\s*\n\s*<div class="card actions">.*?</div>\s*(?=</section>)','\n',text,count=1,flags=re.S|re.I)
+          text=text.replace('<div><div class="section"><h2>Today\'s Live Classes</h2><button class="btn" onclick="openClass()">+ Add Class</button></div>','<div><div class="section"><h2>Today\'s Live Classes</h2></div>',1)
+
+          marker='CREDENCE_DASHBOARD_FINAL_15'
+          if marker not in text:
+              patch=r'''<style id="credence-dashboard-final-style">/* CREDENCE_DASHBOARD_FINAL_15 */
+          #credenceFinalMoreWrap{position:absolute;left:0;top:0;z-index:1000}
+          #credenceFinalMoreBtn{width:42px;height:42px;border:1px solid #e1eae4;border-radius:12px;background:#fff;color:#17352a;font-size:25px;line-height:1;display:grid;place-items:center;cursor:pointer;box-shadow:0 4px 14px rgba(10,70,40,.08);padding:0}
+          #credenceFinalMoreMenu{position:absolute;left:0;top:49px;width:190px;background:#fff;border:1px solid #e1eae4;border-radius:14px;box-shadow:0 12px 30px rgba(10,70,40,.14);padding:7px;display:none}
+          #credenceFinalMoreMenu.show{display:block}
+          #credenceFinalMoreMenu button{width:100%;border:0;background:#fff;text-align:left;border-radius:10px;padding:12px 11px;color:#17352a;font-weight:800;font-size:14px;cursor:pointer}
+          @media(max-width:650px){#credenceFinalMoreWrap{left:0;top:-52px}.top{position:relative}}
+          </style>
+          <script>(function(){'use strict';function start(){var dash=document.getElementById('dashboard');if(!dash)return;dash.querySelectorAll('.section').forEach(function(sec){var h=sec.querySelector('h2'),t=(h&&h.textContent||'').replace(/\s+/g,' ').trim();if(/^quick\s*actions$/i.test(t)){sec.remove();return}if(/^today[’']s\s+live\s+classes$/i.test(t)){sec.querySelectorAll('button').forEach(function(b){if(/^\+?\s*add\s+class$/i.test((b.textContent||'').replace(/\s+/g,' ').trim()))b.remove()})}});var top=document.querySelector('.top');if(!top)return;top.style.position='relative';var w=document.getElementById('credenceFinalMoreWrap');if(!w){w=document.createElement('div');w.id='credenceFinalMoreWrap';w.innerHTML='<button id="credenceFinalMoreBtn" type="button" aria-label="More menu">⋮</button><div id="credenceFinalMoreMenu" role="menu"><button id="credenceFinalSuperAdmin" type="button">🛡️&nbsp; Super Admin</button></div>';top.insertBefore(w,top.firstChild)}var b=document.getElementById('credenceFinalMoreBtn'),m=document.getElementById('credenceFinalMoreMenu'),a=document.getElementById('credenceFinalSuperAdmin');if(!b||!m||!a)return;if(!b.dataset.bound){b.dataset.bound='1';b.onclick=function(e){e.preventDefault();e.stopPropagation();m.classList.toggle('show');b.setAttribute('aria-expanded',m.classList.contains('show'))}}if(!a.dataset.bound){a.dataset.bound='1';a.onclick=function(e){e.preventDefault();e.stopPropagation();m.classList.remove('show');if(typeof window.credenceOpenSuperAdmins==='function')window.credenceOpenSuperAdmins()}}}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();var n=0,t=setInterval(function(){start();if(++n>120)clearInterval(t)},500)})();</script>
+          '''
+              text=text.replace('</head>',patch+'\n</head>',1)
           p.write_text(text,encoding='utf-8')
           PY
       - name: Commit and push if changed
@@ -39,5 +57,5 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add index.html
-          git commit -m 'Bump CREDENCE dashboard asset version'
+          git commit -m 'Apply final CREDENCE dashboard layout'
           git push
