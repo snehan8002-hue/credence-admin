@@ -22,16 +22,17 @@ jobs:
           import re
           p=Path('index.html')
           text=p.read_text(encoding='utf-8')
-          version='20260907-teacher-home-8'
-          for name in ['enhancements.js','enhancements-fixes.js','auth-hardening.js','ui-final-fixes.js','student-final-management.js','business-modules.js','test-management.js','results-management.js','notes-management.js','bottom-nav-final.js','teacher-nav-fix.js','teacher-home-final.js']:
+          version='20260907-stability-9'
+          names=['performance-stability-fix.js','enhancements.js','enhancements-fixes.js','auth-hardening.js','ui-final-fixes.js','student-final-management.js','business-modules.js','test-management.js','results-management.js','notes-management.js','bottom-nav-final.js','teacher-nav-fix.js','teacher-home-final.js']
+          for name in names:
               tag=f'<script defer src="{name}?v={version}"></script>'
-              pattern=r'<script(?: defer)? src="'+re.escape(name)+r'(?:\?v=[^"]+)?"></script>'
+              pattern=r'<script(?: defer)? src="'+re.escape(name)+r'(?:\\?v=[^"]+)?"></script>'
               text,n=re.subn(pattern,tag,text)
               if not n and tag not in text:
                   text=text.replace('</head>',tag+'\n</head>',1)
-          text=re.sub(r'<script(?: defer)? src="teacher-final-fix\.js(?:\?v=[^"]+)?"></script>\s*','',text)
+          text=re.sub(r'<script(?: defer)? src="teacher-final-fix\\.js(?:\\?v=[^"]+)?"></script>\\s*','',text)
           for name in ['student-controls-fix.js','student-management-override.js','student-editor-fix.js','student-navigation-fix.js']:
-              text=re.sub(r'<script(?: defer)? src="'+re.escape(name)+r'(?:\?v=[^"]+)?"></script>\s*','',text)
+              text=re.sub(r'<script(?: defer)? src="'+re.escape(name)+r'(?:\\?v=[^"]+)?"></script>\\s*','',text)
           p.write_text(text,encoding='utf-8')
           PY
       - name: Commit and push if changed
@@ -41,5 +42,5 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add index.html
-          git commit -m 'Restore stable CREDENCE Teacher UI'
+          git commit -m 'Fix CREDENCE admin UI freezing'
           git push
