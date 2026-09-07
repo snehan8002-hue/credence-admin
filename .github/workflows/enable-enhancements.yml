@@ -22,8 +22,8 @@ jobs:
           import re
           p=Path('index.html')
           text=p.read_text(encoding='utf-8')
-          version='20260907-results-1'
-          for name in ['enhancements.js','enhancements-fixes.js','auth-hardening.js','ui-final-fixes.js','student-final-management.js','business-modules.js','test-management.js','results-management.js']:
+          version='20260907-notes-1'
+          for name in ['enhancements.js','enhancements-fixes.js','auth-hardening.js','ui-final-fixes.js','student-final-management.js','business-modules.js','test-management.js','results-management.js','notes-management.js']:
               tag=f'<script defer src="{name}?v={version}"></script>'
               pattern=r'<script(?: defer)? src="'+re.escape(name)+r'(?:\?v=[^"]+)?"></script>'
               text,n=re.subn(pattern,tag,text)
@@ -40,5 +40,5 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add index.html
-          git commit -m 'Enable Results Management module'
+          git commit -m 'Enable Notes and Study Materials module'
           git push
