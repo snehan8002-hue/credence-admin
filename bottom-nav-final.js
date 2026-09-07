@@ -1,35 +1,22 @@
 (function(){
-  'use strict';
-  function text(b){return (b?.textContent||'').replace(/\s+/g,' ').trim().toLowerCase()}
-  function findOutside(label){return [...document.querySelectorAll('button')].find(b=>!b.closest('.mobilebar')&&text(b)===label)}
-  function teachers(){
-    if(typeof window.credenceOpenTeachers==='function'){window.credenceOpenTeachers();return}
-    const b=findOutside('teachers'); if(b)b.click();
-  }
-  function customize(){
-    const b=findOutside('customize app')||findOutside('customize');
-    if(b){b.click();return}
-    if(typeof window.openCustomize==='function'){window.openCustomize();return}
-    const v=[...document.querySelectorAll('.view')].find(x=>/customize/i.test(x.querySelector('h1,h2,h3')?.textContent||''));
-    if(v){document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));v.classList.add('active')}
-  }
-  function run(name,fn){try{fn()}catch(e){console.error('CREDENCE '+name+' navigation error',e)}}
-  function render(bar){
-    const items=[
-      ['🏠','Home',()=>{const v=document.querySelector('.view');if(v){document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));v.classList.add('active')}}],
-      ['👨‍🎓','Students',()=>window.credenceOpenStudents?.()],
-      ['👩‍🏫','Teachers',teachers],
-      ['📚','Classes',()=>window.credenceOpenClasses?.()],
-      ['📝','Tests',()=>window.credenceOpenTests?.()],
-      ['📄','Notes',()=>window.credenceOpenNotes?.()],
-      ['💳','Fees',()=>window.credenceOpenFees?.()],
-      ['⚙️','Customize',customize]
-    ];
-    bar.dataset.ceBottomFinal='1';bar.dataset.ceBottomOwner='final';
-    bar.style.overflow='hidden';bar.style.justifyContent='space-around';
-    bar.innerHTML=items.map(x=>'<button type="button" data-ce-nav-final="'+x[1]+'"><span style="font-size:17px;line-height:18px">'+x[0]+'</span><br><small style="font-size:8px;white-space:nowrap">'+x[1]+'</small></button>').join('');
-    bar.querySelectorAll('[data-ce-nav-final]').forEach((b,i)=>b.onclick=e=>{e.preventDefault();e.stopPropagation();run(items[i][1],items[i][2])});
-  }
-  function ensure(){const bar=document.querySelector('.mobilebar');if(!bar)return;if(bar.dataset.ceBottomOwner!=='final'||!bar.querySelector('[data-ce-nav-final="Teachers"]')||!bar.querySelector('[data-ce-nav-final="Customize"]'))render(bar)}
-  ensure();new MutationObserver(ensure).observe(document.body,{childList:true,subtree:true});
+'use strict';
+const text=b=>(b?.textContent||'').replace(/\s+/g,' ').trim().toLowerCase();
+async function openTeachers(){
+ const f=window.credenceFirebase;if(!f?.auth?.currentUser)return;
+ let v=document.getElementById('ceTeacherView');
+ if(v){v.style.display='block';return load();}
+ v=document.createElement('div');v.id='ceTeacherView';v.style='position:fixed;inset:0;background:#f3f7f4;z-index:10050;overflow:auto;padding:16px 14px 90px';
+ v.innerHTML='<div style="max-width:1000px;margin:auto"><div class="card"><div style="display:flex;justify-content:space-between;align-items:center"><div><h1 style="margin:0">Teacher Management</h1><div class="muted">Manage CREDENCE teachers.</div></div><button class="btn" id="ceTeacherBack">Back</button></div></div><div class="card"><h2>Add Teacher</h2><div class="formgrid"><div class="field"><label>Name</label><input id="ctName" placeholder="Teacher name"></div><div class="field"><label>Subject</label><input id="ctSubject" placeholder="Mathematics"></div><div class="field"><label>Phone</label><input id="ctPhone" placeholder="Phone number"></div><div class="field"><label>Email</label><input id="ctEmail" type="email" placeholder="teacher@example.com"></div></div><button class="btn" id="ctAdd" style="margin-top:12px">+ Add Teacher</button><div id="ctMsg" class="muted" style="margin-top:9px"></div></div><div class="card"><h2>Teachers</h2><input id="ctSearch" class="search" placeholder="Search teacher or subject"><div id="ctList">Loading...</div></div></div>';
+ document.body.appendChild(v);document.getElementById('ceTeacherBack').onclick=()=>v.remove();document.getElementById('ctAdd').onclick=addTeacher;document.getElementById('ctSearch').oninput=render;await load();
+ async function load(){const {getDocs,collection}=await import('https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js');const s=await getDocs(collection(f.db,'teachers'));window.ceTeachers=[];s.forEach(d=>window.ceTeachers.push({id:d.id,...d.data()}));render()}
+ function render(){const q=(document.getElementById('ctSearch')?.value||'').toLowerCase().trim(),rows=(window.ceTeachers||[]).filter(t=>!q||[t.name,t.subject,t.phone,t.email].some(x=>String(x||'').toLowerCase().includes(q)));document.getElementById('ctList').innerHTML=rows.map(t=>'<div class="row"><div class="grow"><b>'+esc(t.name||'Unnamed')+'</b><div class="muted">'+esc(t.subject||'')+(t.phone?' · '+esc(t.phone):'')+(t.email?' · '+esc(t.email):'')+'</div></div><button class="btn danger" data-del="'+esc(t.id)+'">Remove</button></div>').join('')||'<div class="muted">No teachers found.</div>';document.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>removeTeacher(b.dataset.del))}
+ async function addTeacher(){const name=document.getElementById('ctName').value.trim(),subject=document.getElementById('ctSubject').value.trim(),phone=document.getElementById('ctPhone').value.trim(),email=document.getElementById('ctEmail').value.trim().toLowerCase(),m=document.getElementById('ctMsg');if(!name||!subject){m.textContent='Name and subject are required.';return}try{const {addDoc,collection,serverTimestamp}=await import('https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js');await addDoc(collection(f.db,'teachers'),{name,subject,phone,email,active:true,createdAt:serverTimestamp(),createdBy:f.auth.currentUser.uid});m.textContent='Teacher added successfully.';['ctName','ctSubject','ctPhone','ctEmail'].forEach(id=>document.getElementById(id).value='');await load()}catch(e){m.textContent='Could not add teacher: '+e.message}}
+ async function removeTeacher(id){if(!confirm('Remove this teacher?'))return;try{const {deleteDoc,doc}=await import('https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js');await deleteDoc(doc(f.db,'teachers',id));await load()}catch(e){alert('Could not remove teacher: '+e.message)}}
+ function esc(v){return String(v??'').replace(/[&<>\"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[m]))}
+}
+window.credenceOpenTeachers=openTeachers;
+function customize(){const b=[...document.querySelectorAll('button')].find(x=>!x.closest('.mobilebar')&&/^customize app$/i.test(text(x)))||[...document.querySelectorAll('button')].find(x=>!x.closest('.mobilebar')&&/^customize$/i.test(text(x)));if(b)b.click();else if(typeof window.openCustomize==='function')window.openCustomize()}
+function render(bar){if(!bar)return;const items=[['🏠','Home',()=>{const v=document.querySelector('.view');if(v){document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));v.classList.add('active')}}],['👨‍🎓','Students',()=>window.credenceOpenStudents?.()],['👩‍🏫','Teachers',openTeachers],['📚','Classes',()=>window.credenceOpenClasses?.()],['📝','Tests',()=>window.credenceOpenTests?.()],['📄','Notes',()=>window.credenceOpenNotes?.()],['💳','Fees',()=>window.credenceOpenFees?.()],['⚙️','Customize',customize]];bar.dataset.ceBottomFinal='1';bar.dataset.ceBottomOwner='final';bar.innerHTML=items.map(x=>'<button type="button" data-ce-nav-final="'+x[1]+'"><span style="font-size:17px">'+x[0]+'</span><br><small style="font-size:8px">'+x[1]+'</small></button>').join('');bar.querySelectorAll('[data-ce-nav-final]').forEach((b,i)=>b.onclick=e=>{e.preventDefault();e.stopPropagation();try{items[i][2]()}catch(err){console.error(err)}})}
+function ensure(){const bar=document.querySelector('.mobilebar');if(bar&&(!bar.querySelector('[data-ce-nav-final="Teachers"]')||bar.dataset.ceBottomOwner!=='final'))render(bar)}
+ensure();new MutationObserver(ensure).observe(document.body,{childList:true,subtree:true});
 })();
