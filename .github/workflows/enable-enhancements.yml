@@ -23,15 +23,17 @@ jobs:
           import re
           p=Path('index.html')
           text=p.read_text(encoding='utf-8')
-          version='20260907-student-fix-3'
-          for name in ['enhancements.js','enhancements-fixes.js','auth-hardening.js','student-controls-fix.js','student-management-override.js']:
+          version='20260907-student-editor-fix-4'
+          names=['enhancements.js','enhancements-fixes.js','auth-hardening.js','student-controls-fix.js','student-editor-fix.js']
+          text=re.sub(r'<script(?: defer)? src="student-management-override(?:\?v=[^"]+)?"></script>\s*', '', text)
+          for name in names:
               tag=f'<script defer src="{name}?v={version}"></script>'
               pattern=r'<script(?: defer)? src="'+re.escape(name)+r'(?:\?v=[^"]+)?"></script>'
               text,n=re.subn(pattern,tag,text)
               if not n and tag not in text:
                   text=text.replace('</head>',tag+'\n</head>',1)
           p.write_text(text,encoding='utf-8')
-          print('Student management override loaded with DOM-safe deferred scripts.')
+          print('Independent student editor loaded; broken override removed.')
           PY
       - name: Commit and push if changed
         shell: bash
@@ -40,5 +42,5 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add index.html
-          git commit -m 'Fix student edit and enable disable controls'
+          git commit -m 'Fix student editor modal and controls'
           git push
