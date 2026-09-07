@@ -35,58 +35,14 @@ jobs:
               '<div><div class="section"><h2>Today\'s Live Classes</h2></div>', 1
           )
 
-          marker = 'CREDENCE_FORCE_DASHBOARD_UI_V1'
+          marker = 'CREDENCE_REFERENCE_DASHBOARD_V2'
           if marker not in text:
               patch = r'''
-<style id="credence-force-dashboard-style">
-/* CREDENCE_FORCE_DASHBOARD_UI_V1 */
-#credenceForceMoreWrap{position:absolute;left:0;top:0;z-index:1000}
-#credenceForceMoreBtn{width:42px;height:42px;border:1px solid #e1eae4;border-radius:12px;background:#fff;color:#17352a;font-size:25px;line-height:1;display:grid;place-items:center;cursor:pointer;box-shadow:0 4px 14px rgba(10,70,40,.08);padding:0}
-#credenceForceMoreMenu{position:absolute;left:0;top:49px;width:190px;background:#fff;border:1px solid #e1eae4;border-radius:14px;box-shadow:0 12px 30px rgba(10,70,40,.14);padding:7px;display:none}
-#credenceForceMoreMenu.show{display:block}
-#credenceForceMoreMenu button{width:100%;border:0;background:#fff;text-align:left;border-radius:10px;padding:12px 11px;color:#17352a;font-weight:800;font-size:14px;cursor:pointer}
-#credenceForceMoreMenu button:hover{background:#e9f7ed;color:#08783f}
-@media(max-width:650px){#credenceForceMoreWrap{left:0;top:-52px}.top{position:relative}}
-</style>
-<script>
-(function(){
-  'use strict';
-  function install(){
-    var dash=document.getElementById('dashboard');
-    if(!dash) return false;
-    dash.querySelectorAll('.section').forEach(function(sec){
-      var h=sec.querySelector('h2');
-      var t=(h&&h.textContent||'').replace(/\s+/g,' ').trim();
-      if(/^quick\s*actions$/i.test(t)){sec.remove();return;}
-      if(/^today[’']s\s+live\s+classes$/i.test(t)){
-        sec.querySelectorAll('button').forEach(function(btn){
-          if(/^\+?\s*add\s+class$/i.test((btn.textContent||'').replace(/\s+/g,' ').trim())) btn.remove();
-        });
-      }
-    });
-    var top=document.querySelector('.top');
-    if(!top) return true;
-    top.style.position='relative';
-    var wrap=document.getElementById('credenceForceMoreWrap');
-    if(!wrap){
-      wrap=document.createElement('div');
-      wrap.id='credenceForceMoreWrap';
-      wrap.innerHTML='<button id="credenceForceMoreBtn" type="button" aria-label="More menu" aria-expanded="false">⋮</button><div id="credenceForceMoreMenu" role="menu"><button id="credenceForceSuperAdmin" type="button" role="menuitem">🛡️&nbsp; Super Admin</button></div>';
-      top.insertBefore(wrap,top.firstChild);
-    }
-    var btn=document.getElementById('credenceForceMoreBtn'), menu=document.getElementById('credenceForceMoreMenu'), admin=document.getElementById('credenceForceSuperAdmin');
-    if(!btn||!menu||!admin) return true;
-    if(!btn.dataset.bound){btn.dataset.bound='1';btn.onclick=function(e){e.preventDefault();e.stopPropagation();var show=!menu.classList.contains('show');menu.classList.toggle('show',show);btn.setAttribute('aria-expanded',String(show));};}
-    if(!admin.dataset.bound){admin.dataset.bound='1';admin.onclick=function(e){e.preventDefault();e.stopPropagation();menu.classList.remove('show');if(typeof window.credenceOpenSuperAdmins==='function')window.credenceOpenSuperAdmins();else setTimeout(function(){window.credenceOpenSuperAdmins?.()},300);};}
-    if(!document.documentElement.dataset.credenceForceOutside){document.documentElement.dataset.credenceForceOutside='1';document.addEventListener('click',function(e){var w=document.getElementById('credenceForceMoreWrap');if(w&&!w.contains(e.target)){document.getElementById('credenceForceMoreMenu')?.classList.remove('show');document.getElementById('credenceForceMoreBtn')?.setAttribute('aria-expanded','false');}},true);}
-    return true;
-  }
-  function start(){install();var tries=0;var timer=setInterval(function(){install();if(++tries>=120)clearInterval(timer);},500);}
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
-})();
-</script>
+<!-- CREDENCE_REFERENCE_DASHBOARD_V2 -->
+<script defer src="reference-dashboard-ui.js?v=20260908-reference-v2"></script>
 '''
               text=text.replace('</head>',patch+'\n</head>',1)
+
           p.write_text(text,encoding='utf-8')
           PY
 
@@ -97,5 +53,5 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add index.html
-          git commit -m 'Apply dashboard UI directly in index'
+          git commit -m 'Apply reference-style dashboard UI'
           git push
