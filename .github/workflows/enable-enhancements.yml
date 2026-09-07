@@ -2,8 +2,7 @@ name: Enable CREDENCE Admin Enhancements
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -15,7 +14,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Remove conflicting student scripts and install stable business modules
+      - name: Install stable CREDENCE modules
         shell: bash
         run: |
           python - <<'PY'
@@ -23,24 +22,16 @@ jobs:
           import re
           p=Path('index.html')
           text=p.read_text(encoding='utf-8')
-          version='20260907-business-2'
-
-          text=re.sub(r'<script(?: defer)? src="student-(?:controls-fix|management-override|editor-fix)\.js(?:\?v=[^"]+)?"></script>\s*', '', text)
-          text=re.sub(r'<script(?: defer)? src="student-navigation-fix\.js(?:\?v=[^"]+)?"></script>\s*', '', text)
-
-          for name in ['enhancements.js','enhancements-fixes.js','auth-hardening.js','ui-final-fixes.js','student-final-management.js','business-modules.js']:
+          version='20260907-tests-1'
+          for name in ['enhancements.js','enhancements-fixes.js','auth-hardening.js','ui-final-fixes.js','student-final-management.js','business-modules.js','test-management.js']:
               tag=f'<script defer src="{name}?v={version}"></script>'
               pattern=r'<script(?: defer)? src="'+re.escape(name)+r'(?:\?v=[^"]+)?"></script>'
               text,n=re.subn(pattern,tag,text)
               if not n and tag not in text:
                   text=text.replace('</head>',tag+'\n</head>',1)
-
-          text=text.replace(
-              'import { getFirestore, doc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";',
-              'import { getFirestore, doc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";'
-          )
+          for name in ['student-controls-fix.js','student-management-override.js','student-editor-fix.js','student-navigation-fix.js']:
+              text=re.sub(r'<script(?: defer)? src="'+re.escape(name)+r'(?:\?v=[^"]+)?"></script>\s*','',text)
           p.write_text(text,encoding='utf-8')
-          print('CREDENCE stable student, UI, Classes and Fees modules installed.')
           PY
       - name: Commit and push if changed
         shell: bash
@@ -49,5 +40,5 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add index.html
-          git commit -m 'Add business Classes and Fees management modules'
+          git commit -m 'Enable Tests and Question Bank module'
           git push
