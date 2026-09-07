@@ -22,7 +22,7 @@ jobs:
           import re
           p=Path('index.html')
           text=p.read_text(encoding='utf-8')
-          version='20260907-teacher-home-3'
+          version='20260907-teacher-home-4'
           for name in ['enhancements.js','enhancements-fixes.js','auth-hardening.js','ui-final-fixes.js','student-final-management.js','business-modules.js','test-management.js','results-management.js','notes-management.js','bottom-nav-final.js','teacher-nav-fix.js','teacher-home-final.js']:
               tag=f'<script defer src="{name}?v={version}"></script>'
               pattern=r'<script(?: defer)? src="'+re.escape(name)+r'(?:\?v=[^"]+)?"></script>'
