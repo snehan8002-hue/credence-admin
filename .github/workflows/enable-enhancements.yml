@@ -15,7 +15,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Remove conflicting student scripts
+      - name: Remove conflicting student scripts and install stable UI fixes
         shell: bash
         run: |
           python - <<'PY'
@@ -23,13 +23,13 @@ jobs:
           import re
           p=Path('index.html')
           text=p.read_text(encoding='utf-8')
-          version='20260907-student-clean-8'
+          version='20260907-student-clean-9'
           # Remove every experimental student handler. The final management script below
           # is the only student UI that should remain active.
           text=re.sub(r'<script(?: defer)? src="student-(?:controls-fix|management-override|editor-fix)\.js(?:\?v=[^"]+)?"></script>\s*', '', text)
           text=re.sub(r'<script(?: defer)? src="student-navigation-fix\.js(?:\?v=[^"]+)?"></script>\s*', '', text)
           # Keep the stable core scripts fresh.
-          for name in ['enhancements.js','enhancements-fixes.js','auth-hardening.js']:
+          for name in ['enhancements.js','enhancements-fixes.js','auth-hardening.js','ui-final-fixes.js']:
               tag=f'<script defer src="{name}?v={version}"></script>'
               pattern=r'<script(?: defer)? src="'+re.escape(name)+r'(?:\?v=[^"]+)?"></script>'
               text,n=re.subn(pattern,tag,text)
@@ -41,7 +41,7 @@ jobs:
           text=re.sub(r'<script(?: defer)? src="'+re.escape(name)+r'(?:\?v=[^"]+)?"></script>\s*','',text)
           text=text.replace('</head>',tag+'\n</head>',1)
           p.write_text(text,encoding='utf-8')
-          print('Student handlers cleaned; final management installed.')
+          print('Student handlers cleaned; stable UI fixes installed.')
           PY
       - name: Commit and push if changed
         shell: bash
@@ -50,5 +50,5 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add index.html
-          git commit -m 'Install final student management UI'
+          git commit -m 'Fix mobile Customize navigation and refresh UI scripts'
           git push
