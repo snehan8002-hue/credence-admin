@@ -57,9 +57,7 @@ service cloud.firestore {
     }
 
     match /students/{studentId} {
-      // Students can only read their own ACTIVE record using a verified Firebase email or phone claim.
       allow get: if isSuperAdmin() || isStudentOwner(resource.data);
-      // Student lists are admin-only so a student cannot enumerate other students.
       allow list: if isSuperAdmin();
       allow create: if isSuperAdmin()
         && hasStudentFields(request.resource.data)
@@ -72,8 +70,51 @@ service cloud.firestore {
       allow delete: if isSuperAdmin();
     }
 
+    // Business collections: administrators have full CRUD access.
+    // Student-facing read access will be narrowed in the production student-app rules.
+    match /teachers/{teacherId} {
+      allow read, write: if isSuperAdmin();
+    }
+
+    match /classes/{classId} {
+      allow read, write: if isSuperAdmin();
+    }
+
+    match /tests/{testId} {
+      allow read, write: if isSuperAdmin();
+    }
+
+    match /questions/{questionId} {
+      allow read, write: if isSuperAdmin();
+    }
+
+    match /results/{resultId} {
+      allow read, write: if isSuperAdmin();
+    }
+
+    match /fees/{feeId} {
+      allow read, write: if isSuperAdmin();
+    }
+
+    match /payments/{paymentId} {
+      allow read, write: if isSuperAdmin();
+    }
+
+    match /videos/{videoId} {
+      allow read, write: if isSuperAdmin();
+    }
+
+    match /notifications/{notificationId} {
+      allow read, write: if isSuperAdmin();
+    }
+
     match /notes/{noteId} {
       allow read, write: if isSuperAdmin();
+    }
+
+    // Explicitly deny all unspecified collections.
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }
