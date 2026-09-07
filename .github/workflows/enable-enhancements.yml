@@ -22,7 +22,7 @@ jobs:
           import re
           p=Path('index.html')
           text=p.read_text(encoding='utf-8')
-          version='20260908-mobile-fit-18'
+          version='20260908-mobile-fit-19'
           names=['performance-stability-fix.js','enhancements.js','enhancements-fixes.js','auth-hardening.js','ui-final-fixes.js','student-final-management.js','business-modules.js','test-management.js','results-management.js','notes-management.js','bottom-nav-final.js']
           extras=['teacher-nav-fix.js','teacher-home-final.js','teacher-ui-final.js','teacher-final-fix.js','teacher-unified-final.js','dashboard-minimal-menu.js','dashboard-ui-repair.js','reference-mobile-v3.js']
           for name in names + extras:
@@ -37,13 +37,14 @@ jobs:
           text=re.sub(r'\n\s*<div class="section"><h2>Quick Actions</h2></div>\s*\n\s*<div class="card actions">.*?</div>\s*(?=</section>)','\n',text,count=1,flags=re.S|re.I)
           text=text.replace('<div><div class="section"><h2>Today\'s Live Classes</h2><button class="btn" onclick="openClass()">+ Add Class</button></div>','<div><div class="section"><h2>Today\'s Live Classes</h2></div>',1)
           p.write_text(text,encoding='utf-8')
+          Path('app-v2.html').write_text(text,encoding='utf-8')
           PY
       - name: Commit and push if changed
         shell: bash
         run: |
-          if git diff --quiet -- index.html; then exit 0; fi
+          if git diff --quiet -- index.html app-v2.html; then exit 0; fi
           git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add index.html
-          git commit -m 'Fix exact mobile dashboard layout and fixed navigation'
+          git config user.email '41898282+github-actions@users.noreply.github.com'
+          git add index.html app-v2.html
+          git commit -m 'Publish fresh uncached CREDENCE admin app'
           git push
