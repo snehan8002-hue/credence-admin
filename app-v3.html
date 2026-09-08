@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>CREDENCE Admin</title>
+<style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#f4f8f5}iframe{display:block;width:100%;height:100%;border:0}</style>
+</head>
+<body>
+<iframe id="app" src="index.html?fresh=2026090803" title="CREDENCE Admin"></iframe>
+<script>
+(function(){
+ const frame=document.getElementById('app');
+ function patch(){
+  const w=frame.contentWindow,d=frame.contentDocument;if(!d)return;
+  const s=d.getElementById('ceEmergencyLoginFix')||d.createElement('style');s.id='ceEmergencyLoginFix';s.textContent='@media(max-width:650px){body .mobilebar{display:none!important}body.ceBusinessLogin .mobilebar{display:none!important}body:has(#adminGate[style*="display: flex"]) .mobilebar{display:none!important}}';if(!s.parentNode)d.head.appendChild(s);
+  const gate=d.getElementById('adminGate'),shell=d.getElementById('appShell');
+  if(gate&&getComputedStyle(gate).display!=='none')d.querySelectorAll('.mobilebar').forEach(x=>x.style.setProperty('display','none','important'));
+  else if(shell&&getComputedStyle(shell).display!=='none')d.querySelectorAll('.mobilebar').forEach(x=>x.style.setProperty('display','grid','important'));
+  const b=d.getElementById('ceBizLoginButton');
+  if(b&&!b.dataset.emergencyBound){b.dataset.emergencyBound='1';b.onclick=async function(){
+   const f=w.credenceFirebase,err=d.getElementById('loginError'),email=d.getElementById('adminEmailInput')?.value.trim(),pass=d.getElementById('adminPasswordInput')?.value||'';
+   if(!f?.auth||!f.signInWithEmailAndPassword){if(err)err.textContent='Authentication service is still loading. Please try again.';return}
+   if(!email||!pass){if(err)err.textContent='Enter admin email and password.';return}
+   b.disabled=true;b.innerHTML='<span>Signing in…</span><span>→</span>';if(err)err.textContent='';
+   try{await f.signInWithEmailAndPassword(f.auth,email,pass);let i=0;const q=setInterval(()=>{const sh=d.getElementById('appShell'),g=d.getElementById('adminGate');if(sh&&getComputedStyle(sh).display!=='none'){clearInterval(q);d.querySelectorAll('.mobilebar').forEach(x=>x.style.setProperty('display','grid','important'))}if(++i>80){clearInterval(q);if(g&&getComputedStyle(g).display!=='none'){b.disabled=false;b.innerHTML='<span>Login as Admin</span><span>→</span>'}}},100)}catch(e){if(err)err.textContent=e?.code?e.code+': '+(e.message||'Login failed.'):e?.message||'Login failed.';b.disabled=false;b.innerHTML='<span>Login as Admin</span><span>→</span>'}
+  }}
+ }
+ frame.addEventListener('load',function(){patch();setInterval(patch,300)});
+})();
+</script>
+</body></html>
