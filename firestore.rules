@@ -7,15 +7,29 @@ service cloud.firestore {
     function teacher() { return signedIn() && exists(/databases/$(database)/documents/teachers/$(request.auth.uid)) && get(/databases/$(database)/documents/teachers/$(request.auth.uid)).data.active == true; }
     function student() { return signedIn() && exists(/databases/$(database)/documents/students/$(request.auth.uid)) && get(/databases/$(database)/documents/students/$(request.auth.uid)).data.active == true; }
     function learnerOrTeacher() { return student() || teacher(); }
-    function studentOwner(data) { return signedIn() && data.active == true && ((request.auth.token.email != null && data.email == request.auth.token.email) || (request.auth.token.phone_number != null && data.phone == request.auth.token.phone_number)); }
+    function studentOwner(data) { return signedIn() && data.active == true && ((request.auth.token.email != null && data.email == request.auth.token.email) || (request.auth.token.phone_number != null && data.phone == request.auth.token.phone)); }
     function validStudent(data) { return data.keys().hasAll(['name','rollNo','className','phone','email','active','createdAt','updatedAt']) && data.keys().hasOnly(['name','rollNo','className','phone','email','active','createdAt','updatedAt']) && data.name is string && data.rollNo is string && data.className is string && data.phone is string && data.email is string && data.active is bool && data.createdAt is timestamp && data.updatedAt is timestamp; }
     function activePerson(id) { return id == 'aBYdbFwbsTUbpmYtoNurxyu3Roj2' || (exists(/databases/$(database)/documents/superAdmins/$(id)) && get(/databases/$(database)/documents/superAdmins/$(id)).data.active == true) || (exists(/databases/$(database)/documents/teachers/$(id)) && get(/databases/$(database)/documents/teachers/$(id)).data.active == true) || (exists(/databases/$(database)/documents/students/$(id)) && get(/databases/$(database)/documents/students/$(id)).data.active == true); }
     function studentId(id) { return exists(/databases/$(database)/documents/students/$(id)) && get(/databases/$(database)/documents/students/$(id)).data.active == true; }
-    function chatParticipants(data) { return signedIn() && data.participants is list && data.participants.size() == 2 && data.participants.hasAny([request.auth.uid]) && activePerson(data.participants[0]) && activePerson(data.participants[1]); }
     function notStudentToStudent(data) { return !(studentId(data.participants[0]) && studentId(data.participants[1])); }
-    match /superAdmins/{id} { allow get, list: if admin(); allow create: if admin() && request.resource.data.uid == id && request.resource.data.createdAt == request.time; allow update: if admin() && request.resource.data.uid == resource.data.uid; allow delete: if primary() && id != 'aBYdbFwbsTUbpmYtoNurxyu3Roj2'; }
-    match /students/{id} { allow get: if admin() || teacher() || (id == request.auth.uid && studentOwner(resource.data)); allow list: if admin() || teacher(); allow create: if admin() && validStudent(request.resource.data) && request.resource.data.createdAt == request.time && request.resource.data.updatedAt == request.time; allow update: if admin() && validStudent(request.resource.data) && request.resource.data.createdAt == resource.data.createdAt && request.resource.data.updatedAt == request.time; allow delete: if admin(); }
-    match /teachers/{id} { allow get: if admin() || (id == request.auth.uid && teacher()); allow list: if admin(); allow create, update, delete: if admin(); }
+    function chatParticipants(data) { return signedIn() && data.participants is list && data.participants.size() == 2 && data.participants.hasAny([request.auth.uid]) && activePerson(data.participants[0]) && activePerson(data.participants[1]) && notStudentToStudent(data); }
+    match /superAdmins/{id} {
+      allow get, list: if admin() || student() || teacher();
+      allow create: if admin() && request.resource.data.uid == id && request.resource.data.createdAt == request.time;
+      allow update: if admin() && request.resource.data.uid == resource.data.uid;
+      allow delete: if primary() && id != 'aBYdbFwbsTUbpmYtoNurxyu3Roj2';
+    }
+    match /students/{id} {
+      allow get: if admin() || teacher() || (id == request.auth.uid && studentOwner(resource.data));
+      allow list: if admin() || teacher();
+      allow create: if admin() && validStudent(request.resource.data) && request.resource.data.createdAt == request.time && request.resource.data.updatedAt == request.time;
+      allow update: if admin() && validStudent(request.resource.data) && request.resource.data.createdAt == resource.data.createdAt && request.resource.data.updatedAt == request.time;
+      allow delete: if admin();
+    }
+    match /teachers/{id} {
+      allow get, list: if admin() || teacher() || student();
+      allow create, update, delete: if admin();
+    }
     match /classes/{id} { allow read: if learnerOrTeacher() || admin(); allow create, update, delete: if teacher() || admin(); }
     match /tests/{id} { allow read: if learnerOrTeacher() || admin(); allow create, update, delete: if teacher() || admin(); }
     match /questions/{id} { allow read: if learnerOrTeacher() || admin(); allow create, update, delete: if teacher() || admin(); }
@@ -28,7 +42,7 @@ service cloud.firestore {
     match /system/{id} { allow read: if signedIn(); allow create, update, delete: if admin(); }
     match /chats/{chatId} {
       allow get: if chatParticipants(resource.data);
-      allow create: if chatParticipants(request.resource.data) && notStudentToStudent(request.resource.data);
+      allow create: if chatParticipants(request.resource.data);
       allow update: if chatParticipants(resource.data) && request.resource.data.participants == resource.data.participants && request.resource.data.participants.size() == 2;
       allow delete: if chatParticipants(resource.data);
       match /messages/{messageId} {
@@ -37,11 +51,7 @@ service cloud.firestore {
         allow update, delete: if chatParticipants(get(/databases/$(database)/documents/chats/$(chatId)).data) && resource.data.senderUid == request.auth.uid;
       }
     }
-    match /userChats/{uid}/items/{chatId} {
-      allow read, list, create, update, delete: if signedIn() && request.auth.uid == uid;
-    }
+    match /userChats/{uid}/items/{chatId} { allow read, list, create, update, delete: if signedIn() && request.auth.uid == uid; }
     match /{document=**} { allow read, write: if false; }
   }
 }
-
-// Storage upload authorization is maintained separately in storage.rules.
