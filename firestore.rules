@@ -45,7 +45,8 @@ service cloud.firestore {
     match /notes/{id} { allow read: if learnerOrTeacher() || admin(); allow create, update, delete: if teacher() || admin(); }
     match /system/{id} { allow read: if signedIn(); allow create, update, delete: if admin(); }
     match /chats/{chatId} {
-      allow get, create, update, delete: if chatMember(resource.data) || (request.method == 'create' && chatMember(request.resource.data));
+      allow create: if chatMember(request.resource.data);
+      allow get, update, delete: if chatMember(resource.data);
       match /messages/{messageId} {
         allow read: if chatMember(get(/databases/$(database)/documents/chats/$(chatId)).data);
         allow create: if chatMember(get(/databases/$(database)/documents/chats/$(chatId)).data) && request.resource.data.senderUid == request.auth.uid && request.resource.data.text is string;
