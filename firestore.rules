@@ -9,6 +9,7 @@ service cloud.firestore {
     function learnerOrTeacher() { return student() || teacher(); }
     function studentOwner(data) { return signedIn() && data.active == true && ((request.auth.token.email != null && data.email == request.auth.token.email) || (request.auth.token.phone_number != null && data.phone == request.auth.token.phone_number)); }
     function validStudent(data) { return data.keys().hasAll(['name','rollNo','className','phone','email','active','createdAt','updatedAt']) && data.keys().hasOnly(['name','rollNo','className','phone','email','active','createdAt','updatedAt']) && data.name is string && data.rollNo is string && data.className is string && data.phone is string && data.email is string && data.active is bool && data.createdAt is timestamp && data.updatedAt is timestamp; }
+    function askParticipant(data) { return signedIn() && data.participants is list && data.participants.hasAny([request.auth.uid]); }
     match /superAdmins/{id} { allow get, list: if admin(); allow create: if admin() && request.resource.data.uid == id && request.resource.data.createdAt == request.time; allow update: if admin() && request.resource.data.uid == resource.data.uid; allow delete: if primary() && id != 'aBYdbFwbsTUbpmYtoNurxyu3Roj2'; }
     match /students/{id} { allow get: if admin() || teacher() || (id == request.auth.uid && studentOwner(resource.data)); allow list: if admin() || teacher(); allow create: if admin() && validStudent(request.resource.data) && request.resource.data.createdAt == request.time && request.resource.data.updatedAt == request.time; allow update: if admin() && validStudent(request.resource.data) && request.resource.data.createdAt == resource.data.createdAt && request.resource.data.updatedAt == request.time; allow delete: if admin(); }
     match /teachers/{id} { allow get: if admin() || (id == request.auth.uid && teacher()); allow list: if admin(); allow create, update, delete: if admin(); }
@@ -22,6 +23,17 @@ service cloud.firestore {
     match /notifications/{id} { allow read: if learnerOrTeacher() || admin(); allow create, update, delete: if teacher() || admin(); }
     match /notes/{id} { allow read: if learnerOrTeacher() || admin(); allow create, update, delete: if teacher() || admin(); }
     match /system/{id} { allow read: if signedIn(); allow create, update, delete: if admin(); }
+    match /askChats/{chatId} {
+      allow get: if askParticipant(resource.data);
+      allow create: if askParticipant(request.resource.data) && request.resource.data.participants.size() == 2;
+      allow update: if askParticipant(resource.data) && askParticipant(request.resource.data);
+      allow delete: if askParticipant(resource.data);
+      match /messages/{messageId} {
+        allow read: if askParticipant(get(/databases/$(database)/documents/askChats/$(chatId)).data);
+        allow create: if askParticipant(get(/databases/$(database)/documents/askChats/$(chatId)).data) && request.resource.data.senderUid == request.auth.uid;
+        allow update, delete: if askParticipant(get(/databases/$(database)/documents/askChats/$(chatId)).data) && resource.data.senderUid == request.auth.uid;
+      }
+    }
     match /{document=**} { allow read, write: if false; }
   }
 }
