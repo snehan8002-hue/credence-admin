@@ -49,11 +49,11 @@ jobs:
             printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$RUNNER_TEMP/firebase-service-account.json"
             trap 'rm -f "$RUNNER_TEMP/firebase-service-account.json"' EXIT
             export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/firebase-service-account.json"
-            echo "Deploying Firestore rules with FIREBASE_SERVICE_ACCOUNT..."
-            firebase deploy --only firestore:rules --project credence-76953 --non-interactive --debug
+            echo "Deploying all configured Firestore resources for credence-76953 using FIREBASE_SERVICE_ACCOUNT..."
+            firebase deploy --only firestore --project credence-76953 --non-interactive --debug
           elif [ -n "${FIREBASE_TOKEN:-}" ]; then
-            echo "Deploying Firestore rules with FIREBASE_TOKEN..."
-            firebase deploy --only firestore:rules --project credence-76953 --non-interactive --token "$FIREBASE_TOKEN" --debug
+            echo "Deploying all configured Firestore resources for credence-76953 using FIREBASE_TOKEN..."
+            firebase deploy --only firestore --project credence-76953 --non-interactive --token "$FIREBASE_TOKEN" --debug
           else
             echo "ERROR: No Firebase credential configured."
             echo "Add FIREBASE_SERVICE_ACCOUNT (recommended) or FIREBASE_TOKEN to GitHub repository Actions secrets."
@@ -61,4 +61,4 @@ jobs:
           fi
 
       - name: Deployment complete
-        run: echo "CREDENCE Firestore rules deployment completed for credence-76953."
+        run: echo "CREDENCE Firestore deployment completed for credence-76953."
