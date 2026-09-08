@@ -1,41 +1,37 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    function signedIn() {
-      return request.auth != null;
-    }
-
-    function isPrimaryAdmin() {
-      return signedIn() && request.auth.uid == 'aBYdbFwbsTUbpmYtoNurxyu3Roj2';
-    }
-
+    function signedIn() { return request.auth != null; }
+    function isPrimaryAdmin() { return signedIn() && request.auth.uid == 'aBYdbFwbsTUbpmYtoNurxyu3Roj2'; }
     function isSuperAdmin() {
       return isPrimaryAdmin()
         || (signedIn()
           && exists(/databases/$(database)/documents/superAdmins/$(request.auth.uid))
           && get(/databases/$(database)/documents/superAdmins/$(request.auth.uid)).data.active == true);
     }
-
-    function isStudentOwner(data) {
+    function isTeacher() {
       return signedIn()
-        && data.active == true
-        && (
-          (request.auth.token.email != null && data.email == request.auth.token.email)
-          || (request.auth.token.phone_number != null && data.phone == request.auth.token.phone_number)
-        );
+        && exists(/databases/$(database)/documents/teachers/$(request.auth.uid))
+        && get(/databases/$(database)/documents/teachers/$(request.auth.uid)).data.active == true;
     }
-
+    function isStudent() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/students/$(request.auth.uid))
+        && get(/databases/$(database)/documents/students/$(request.auth.uid)).data.active == true;
+    }
+    function isLearnerOrTeacher() { return isStudent() || isTeacher(); }
+    function isStudentOwner(data) {
+      return signedIn() && data.active == true && (
+        (request.auth.token.email != null && data.email == request.auth.token.email)
+        || (request.auth.token.phone_number != null && data.phone == request.auth.token.phone_number)
+      );
+    }
     function hasStudentFields(data) {
-      return data.keys().hasAll(['name', 'rollNo', 'className', 'phone', 'email', 'active', 'createdAt', 'updatedAt'])
-        && data.keys().hasOnly(['name', 'rollNo', 'className', 'phone', 'email', 'active', 'createdAt', 'updatedAt'])
-        && data.name is string
-        && data.rollNo is string
-        && data.className is string
-        && data.phone is string
-        && data.email is string
-        && data.active is bool
-        && data.createdAt is timestamp
-        && data.updatedAt is timestamp;
+      return data.keys().hasAll(['name','rollNo','className','phone','email','active','createdAt','updatedAt'])
+        && data.keys().hasOnly(['name','rollNo','className','phone','email','active','createdAt','updatedAt'])
+        && data.name is string && data.rollNo is string && data.className is string
+        && data.phone is string && data.email is string && data.active is bool
+        && data.createdAt is timestamp && data.updatedAt is timestamp;
     }
 
     match /superAdmins/{adminId} {
@@ -43,78 +39,68 @@ service cloud.firestore {
       allow create: if isSuperAdmin()
         && request.resource.data.keys().hasAll(['uid','name','email','active','createdAt','createdBy'])
         && request.resource.data.uid == adminId
-        && request.resource.data.name is string
-        && request.resource.data.email is string
-        && request.resource.data.active is bool
-        && request.resource.data.createdAt == request.time
+        && request.resource.data.name is string && request.resource.data.email is string
+        && request.resource.data.active is bool && request.resource.data.createdAt == request.time
         && request.resource.data.createdBy == request.auth.uid;
       allow update: if isSuperAdmin()
         && request.resource.data.uid == resource.data.uid
-        && request.resource.data.name is string
-        && request.resource.data.email is string
+        && request.resource.data.name is string && request.resource.data.email is string
         && request.resource.data.active is bool;
       allow delete: if false;
     }
 
     match /students/{studentId} {
-      allow get: if isSuperAdmin() || isStudentOwner(resource.data);
+      allow get: if isSuperAdmin() || (studentId == request.auth.uid && isStudentOwner(resource.data));
       allow list: if isSuperAdmin();
-      allow create: if isSuperAdmin()
-        && hasStudentFields(request.resource.data)
-        && request.resource.data.createdAt == request.time
-        && request.resource.data.updatedAt == request.time;
-      allow update: if isSuperAdmin()
-        && hasStudentFields(request.resource.data)
-        && request.resource.data.createdAt == resource.data.createdAt
-        && request.resource.data.updatedAt == request.time;
+      allow create: if isSuperAdmin() && hasStudentFields(request.resource.data)
+        && request.resource.data.createdAt == request.time && request.resource.data.updatedAt == request.time;
+      allow update: if isSuperAdmin() && hasStudentFields(request.resource.data)
+        && request.resource.data.createdAt == resource.data.createdAt && request.resource.data.updatedAt == request.time;
       allow delete: if isSuperAdmin();
     }
 
-    // Business collections: administrators have full CRUD access.
-    // Student-facing read access will be narrowed in the production student-app rules.
     match /teachers/{teacherId} {
-      allow read, write: if isSuperAdmin();
+      allow get: if isSuperAdmin() || (teacherId == request.auth.uid && isTeacher());
+      allow list: if isSuperAdmin();
+      allow create, update, delete: if isSuperAdmin();
     }
 
     match /classes/{classId} {
-      allow read, write: if isSuperAdmin();
+      allow read: if isLearnerOrTeacher() || isSuperAdmin();
+      allow create, update, delete: if isTeacher() || isSuperAdmin();
     }
-
     match /tests/{testId} {
-      allow read, write: if isSuperAdmin();
+      allow read: if isLearnerOrTeacher() || isSuperAdmin();
+      allow create, update, delete: if isTeacher() || isSuperAdmin();
     }
-
     match /questions/{questionId} {
-      allow read, write: if isSuperAdmin();
+      allow read: if isLearnerOrTeacher() || isSuperAdmin();
+      allow create, update, delete: if isTeacher() || isSuperAdmin();
     }
-
     match /results/{resultId} {
-      allow read, write: if isSuperAdmin();
+      allow read: if isLearnerOrTeacher() || isSuperAdmin();
+      allow create, update, delete: if isTeacher() || isSuperAdmin();
     }
-
     match /fees/{feeId} {
-      allow read, write: if isSuperAdmin();
+      allow read: if isLearnerOrTeacher() || isSuperAdmin();
+      allow create, update, delete: if isSuperAdmin();
     }
-
     match /payments/{paymentId} {
-      allow read, write: if isSuperAdmin();
+      allow read: if isLearnerOrTeacher() || isSuperAdmin();
+      allow create, update, delete: if isSuperAdmin();
     }
-
     match /videos/{videoId} {
-      allow read, write: if isSuperAdmin();
+      allow read: if isLearnerOrTeacher() || isSuperAdmin();
+      allow create, update, delete: if isTeacher() || isSuperAdmin();
     }
-
     match /notifications/{notificationId} {
-      allow read, write: if isSuperAdmin();
+      allow read: if isLearnerOrTeacher() || isSuperAdmin();
+      allow create, update, delete: if isTeacher() || isSuperAdmin();
     }
-
     match /notes/{noteId} {
-      allow read, write: if isSuperAdmin();
+      allow read: if isLearnerOrTeacher() || isSuperAdmin();
+      allow create, update, delete: if isTeacher() || isSuperAdmin();
     }
-
-    // Explicitly deny all unspecified collections.
-    match /{document=**} {
-      allow read, write: if false;
-    }
+    match /{document=**} { allow read, write: if false; }
   }
 }
