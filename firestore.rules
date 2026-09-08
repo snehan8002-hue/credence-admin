@@ -25,3 +25,5 @@ service cloud.firestore {
     match /{document=**} { allow read, write: if false; }
   }
 }
+
+// Storage upload authorization is maintained separately in storage.rules.
