@@ -15,8 +15,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Bump UI asset version
-        run: sed -i 's/20260907-dashboard-menu-17/20260908-login-fix-29/g; s/20260908-mobile-fit-20/20260908-login-fix-29/g; s/20260908-login-fix-21/20260908-login-fix-29/g; s/20260908-login-fix-22/20260908-login-fix-29/g; s/20260908-login-fix-23/20260908-login-fix-29/g; s/20260908-login-fix-24/20260908-login-fix-29/g; s/20260908-login-fix-25/20260908-login-fix-29/g; s/20260908-login-fix-26/20260908-login-fix-29/g; s/20260908-login-fix-27/20260908-login-fix-29/g; s/20260908-login-fix-28/20260908-login-fix-29/g' index.html
+      - name: Bump UI asset version and load interior polish
+        run: |
+          sed -i 's/20260907-dashboard-menu-17/20260908-interior-v2/g; s/20260908-mobile-fit-20/20260908-interior-v2/g; s/20260908-login-fix-21/20260908-interior-v2/g; s/20260908-login-fix-22/20260908-interior-v2/g; s/20260908-login-fix-23/20260908-interior-v2/g; s/20260908-login-fix-24/20260908-interior-v2/g; s/20260908-login-fix-25/20260908-interior-v2/g; s/20260908-login-fix-26/20260908-interior-v2/g; s/20260908-login-fix-27/20260908-interior-v2/g; s/20260908-login-fix-28/20260908-interior-v2/g; s/20260908-login-fix-29/20260908-interior-v2/g' index.html
+          grep -q 'interior-business-polish-v2.js' index.html || sed -i '/reference-mobile-v3.js/a <script defer src="interior-business-polish-v2.js?v=20260908-interior-v2"></script>' index.html
       - name: Commit cache-busting version
         run: |
           if git diff --quiet; then
@@ -26,5 +28,5 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add index.html
-          git commit -m 'Refresh admin login assets [skip ci]'
+          git commit -m 'Refresh CREDENCE interior UI assets [skip ci]'
           git push
