@@ -9,12 +9,10 @@ service cloud.firestore {
     function learnerOrTeacher() { return student() || teacher(); }
     function studentOwner(data) { return signedIn() && data.active == true && ((request.auth.token.email != null && data.email == request.auth.token.email) || (request.auth.token.phone_number != null && data.phone == request.auth.token.phone)); }
     function validStudent(data) { return data.keys().hasAll(['name','rollNo','className','phone','email','active','createdAt','updatedAt']) && data.keys().hasOnly(['name','rollNo','className','phone','email','active','createdAt','updatedAt']) && data.name is string && data.rollNo is string && data.className is string && data.phone is string && data.email is string && data.active is bool && data.createdAt is timestamp && data.updatedAt is timestamp; }
-    function activePerson(id) { return id == 'aBYdbFwbsTUbpmYtoNurxyu3Roj2' || (exists(/databases/$(database)/documents/superAdmins/$(id)) && get(/databases/$(database)/documents/superAdmins/$(id)).data.active == true) || (exists(/databases/$(database)/documents/teachers/$(id)) && get(/databases/$(database)/documents/teachers/$(id)).data.active == true) || (exists(/databases/$(database)/documents/students/$(id)) && get(/databases/$(database)/documents/students/$(id)).data.active == true); }
-    function studentId(id) { return exists(/databases/$(database)/documents/students/$(id)) && get(/databases/$(database)/documents/students/$(id)).data.active == true; }
-    function chatParticipants(data) { return signedIn() && data.participants is list && data.participants.size() == 2 && data.participants.hasAny([request.auth.uid]) && activePerson(data.participants[0]) && activePerson(data.participants[1]) && !(studentId(data.participants[0]) && studentId(data.participants[1])); }
+    function chatMember(data) { return signedIn() && data.participants is list && data.participants.size() == 2 && data.participants.hasAny([request.auth.uid]); }
     function validRegistration(data) { return data.keys().hasAll(['name','email','phone','role','status','createdAt']) && data.keys().hasOnly(['name','email','phone','role','status','createdAt']) && data.name is string && data.email is string && data.phone is string && data.role in ['student','teacher'] && data.status == 'pending' && data.createdAt is timestamp; }
     match /registrationRequests/{id} {
-      allow create: if !signedIn() && validRegistration(request.resource.data) && request.resource.data.createdAt == request.time;
+      allow create: if validRegistration(request.resource.data) && request.resource.data.createdAt == request.time;
       allow get, list: if admin();
       allow update: if admin();
       allow delete: if admin();
@@ -47,17 +45,18 @@ service cloud.firestore {
     match /notes/{id} { allow read: if learnerOrTeacher() || admin(); allow create, update, delete: if teacher() || admin(); }
     match /system/{id} { allow read: if signedIn(); allow create, update, delete: if admin(); }
     match /chats/{chatId} {
-      allow get: if chatParticipants(resource.data);
-      allow create: if chatParticipants(request.resource.data);
-      allow update: if chatParticipants(resource.data) && request.resource.data.participants == resource.data.participants && request.resource.data.participants.size() == 2;
-      allow delete: if chatParticipants(resource.data);
+      allow get, create, update, delete: if chatMember(resource.data) || (request.method == 'create' && chatMember(request.resource.data));
       match /messages/{messageId} {
-        allow read: if chatParticipants(get(/databases/$(database)/documents/chats/$(chatId)).data);
-        allow create: if chatParticipants(get(/databases/$(database)/documents/chats/$(chatId)).data) && request.resource.data.senderUid == request.auth.uid && request.resource.data.text is string;
-        allow update, delete: if chatParticipants(get(/databases/$(database)/documents/chats/$(chatId)).data) && resource.data.senderUid == request.auth.uid;
+        allow read: if chatMember(get(/databases/$(database)/documents/chats/$(chatId)).data);
+        allow create: if chatMember(get(/databases/$(database)/documents/chats/$(chatId)).data) && request.resource.data.senderUid == request.auth.uid && request.resource.data.text is string;
+        allow update, delete: if chatMember(get(/databases/$(database)/documents/chats/$(chatId)).data) && resource.data.senderUid == request.auth.uid;
       }
     }
-    match /userChats/{uid}/items/{chatId} { allow read, list, create, update, delete: if signedIn() && request.auth.uid == uid; }
+    match /userChats/{uid}/items/{chatId} {
+      allow read, list: if signedIn() && request.auth.uid == uid;
+      allow create, update: if signedIn() && request.resource.data.participants is list && request.resource.data.participants.size() == 2 && request.resource.data.participants.hasAny([request.auth.uid]) && request.resource.data.participants.hasAny([uid]);
+      allow delete: if signedIn() && request.auth.uid == uid;
+    }
     match /{document=**} { allow read, write: if false; }
   }
 }
