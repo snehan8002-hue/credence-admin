@@ -26,6 +26,42 @@
       Date.now() - window.__credenceLoginGestureAt < GESTURE_WINDOW;
   }
 
+  function revealAdminShell(user){
+    const gate = document.getElementById('adminGate');
+    const shell = document.getElementById('appShell');
+    const who = document.getElementById('adminEmail');
+
+    if(who) who.textContent = user?.email || 'Firebase Admin';
+
+    /* Inline !important guarantees the login overlay cannot win the cascade. */
+    if(gate){
+      gate.style.setProperty('display','none','important');
+      gate.style.setProperty('visibility','hidden','important');
+      gate.style.setProperty('pointer-events','none','important');
+    }
+    if(shell){
+      shell.style.setProperty('display','block','important');
+      shell.style.setProperty('visibility','visible','important');
+      shell.style.setProperty('pointer-events','auto','important');
+    }
+
+    document.body.classList.remove('ceBusinessLogin');
+    document.querySelectorAll('.mobilebar').forEach(nav=>{
+      nav.style.setProperty('display','grid','important');
+      nav.style.setProperty('visibility','visible','important');
+      nav.style.removeProperty('pointer-events');
+    });
+
+    /* Start the dashboard at Home if the existing UI has not selected a view yet. */
+    const activeView = document.querySelector('#appShell .view.active, #appShell [data-view].active');
+    if(!activeView){
+      const homeButton = document.querySelector('#appShell [data-view="home"], #appShell [data-page="home"], #appShell .nav-home');
+      if(homeButton && typeof homeButton.click === 'function') homeButton.click();
+    }
+
+    window.scrollTo(0,0);
+  }
+
   async function login(){
     /* Never authenticate merely because a script/autofill invoked the handler. */
     if(!hasRecentUserGesture()) return;
@@ -79,14 +115,7 @@
       }
 
       setButton(btn, 'Login successful', true);
-
-      const gate = document.getElementById('adminGate');
-      const shell = document.getElementById('appShell');
-      const who = document.getElementById('adminEmail');
-      if(who) who.textContent = user.email || 'Firebase Admin';
-      if(gate) gate.style.display = 'none';
-      if(shell) shell.style.display = 'block';
-
+      revealAdminShell(user);
       window.__credenceLoginGestureAt = 0;
 
     }catch(e){
@@ -115,7 +144,6 @@
     }
   }
 
-  /* Private stable entry point: legacy inline code cannot replace this name. */
   window.__credenceSecureLogin = login;
   window.__credenceMarkLoginGesture = markUserGesture;
   window.__credenceAuthHardeningLoaded = true;
