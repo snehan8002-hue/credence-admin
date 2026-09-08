@@ -9,43 +9,15 @@ service cloud.firestore {
     function learnerOrTeacher() { return student() || teacher(); }
     function studentOwner(data) { return signedIn() && data.active == true && ((request.auth.token.email != null && data.email == request.auth.token.email) || (request.auth.token.phone_number != null && data.phone == request.auth.token.phone_number)); }
     function validStudent(data) { return data.keys().hasAll(['name','rollNo','className','phone','email','active','createdAt','updatedAt']) && data.keys().hasOnly(['name','rollNo','className','phone','email','active','createdAt','updatedAt']) && data.name is string && data.rollNo is string && data.className is string && data.phone is string && data.email is string && data.active is bool && data.createdAt is timestamp && data.updatedAt is timestamp; }
-
-    match /superAdmins/{id} {
-      allow get, list: if admin();
-      allow create: if admin() && request.resource.data.uid == id && request.resource.data.createdAt == request.time;
-      allow update: if admin() && request.resource.data.uid == resource.data.uid;
-      allow delete: if false;
-    }
-    match /students/{id} {
-      allow get: if admin() || (id == request.auth.uid && studentOwner(resource.data));
-      allow list: if admin();
-      allow create: if admin() && validStudent(request.resource.data) && request.resource.data.createdAt == request.time && request.resource.data.updatedAt == request.time;
-      allow update: if admin() && validStudent(request.resource.data) && request.resource.data.createdAt == resource.data.createdAt && request.resource.data.updatedAt == request.time;
-      allow delete: if admin();
-    }
-    match /teachers/{id} {
-      allow get: if admin() || (id == request.auth.uid && teacher());
-      allow list: if admin();
-      allow create, update, delete: if admin();
-    }
+    match /superAdmins/{id} { allow get, list: if admin(); allow create: if admin() && request.resource.data.uid == id && request.resource.data.createdAt == request.time; allow update: if admin() && request.resource.data.uid == resource.data.uid; allow delete: if false; }
+    match /students/{id} { allow get: if admin() || teacher() || (id == request.auth.uid && studentOwner(resource.data)); allow list: if admin() || teacher(); allow create: if admin() && validStudent(request.resource.data) && request.resource.data.createdAt == request.time && request.resource.data.updatedAt == request.time; allow update: if admin() && validStudent(request.resource.data) && request.resource.data.createdAt == resource.data.createdAt && request.resource.data.updatedAt == request.time; allow delete: if admin(); }
+    match /teachers/{id} { allow get: if admin() || (id == request.auth.uid && teacher()); allow list: if admin(); allow create, update, delete: if admin(); }
     match /classes/{id} { allow read: if learnerOrTeacher() || admin(); allow create, update, delete: if teacher() || admin(); }
     match /tests/{id} { allow read: if learnerOrTeacher() || admin(); allow create, update, delete: if teacher() || admin(); }
     match /questions/{id} { allow read: if learnerOrTeacher() || admin(); allow create, update, delete: if teacher() || admin(); }
-    match /results/{id} {
-      allow read: if admin() || teacher() || (student() && resource.data.studentUid == request.auth.uid);
-      allow create: if teacher() || admin() || (student() && request.resource.data.studentUid == request.auth.uid);
-      allow update, delete: if teacher() || admin();
-    }
-    match /fees/{id} {
-      allow get: if admin() || teacher() || (student() && resource.data.studentUid == request.auth.uid);
-      allow list: if admin() || teacher();
-      allow create, update, delete: if admin();
-    }
-    match /payments/{id} {
-      allow get: if admin() || teacher() || (student() && resource.data.studentUid == request.auth.uid);
-      allow list: if admin() || teacher();
-      allow create, update, delete: if admin();
-    }
+    match /results/{id} { allow read: if admin() || teacher() || (student() && resource.data.studentUid == request.auth.uid); allow create: if teacher() || admin() || (student() && request.resource.data.studentUid == request.auth.uid); allow update, delete: if teacher() || admin(); }
+    match /fees/{id} { allow get: if admin() || teacher() || (student() && resource.data.studentUid == request.auth.uid); allow list: if admin() || teacher(); allow create, update, delete: if admin(); }
+    match /payments/{id} { allow get: if admin() || teacher() || (student() && resource.data.studentUid == request.auth.uid); allow list: if admin() || teacher(); allow create, update, delete: if admin(); }
     match /videos/{id} { allow read: if learnerOrTeacher() || admin(); allow create, update, delete: if teacher() || admin(); }
     match /notifications/{id} { allow read: if learnerOrTeacher() || admin(); allow create, update, delete: if teacher() || admin(); }
     match /notes/{id} { allow read: if learnerOrTeacher() || admin(); allow create, update, delete: if teacher() || admin(); }
