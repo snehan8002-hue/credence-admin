@@ -1,1 +1,0 @@
-Admin removal fix loader placeholder.
