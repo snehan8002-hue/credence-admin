@@ -16,7 +16,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Bump UI asset version
-        run: sed -i 's/20260907-dashboard-menu-17/20260908-login-fix-21/g; s/20260908-mobile-fit-20/20260908-login-fix-21/g' index.html
+        run: sed -i 's/20260907-dashboard-menu-17/20260908-login-fix-22/g; s/20260908-mobile-fit-20/20260908-login-fix-22/g; s/20260908-login-fix-21/20260908-login-fix-22/g' index.html
       - name: Commit cache-busting version
         run: |
           if git diff --quiet; then
@@ -26,5 +26,5 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add index.html
-          git commit -m 'Force fresh UI assets for admin login fix [skip ci]'
+          git commit -m 'Force fresh UI assets for admin auth hardening [skip ci]'
           git push
