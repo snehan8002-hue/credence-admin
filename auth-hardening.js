@@ -1,7 +1,8 @@
-/* CREDENCE AUTH — fast, single Firebase sign-in path */
+/* CREDENCE AUTH — single user-initiated Firebase sign-in path */
 (function(){
   'use strict';
   let busy = false;
+  const GESTURE_WINDOW = 2500;
 
   const withTimeout = (promise, ms, message) => Promise.race([
     promise,
@@ -16,7 +17,18 @@
       : '<span>'+text+'</span><span>→</span>';
   }
 
+  function markUserGesture(){
+    window.__credenceLoginGestureAt = Date.now();
+  }
+
+  function hasRecentUserGesture(){
+    return Number.isFinite(window.__credenceLoginGestureAt) &&
+      Date.now() - window.__credenceLoginGestureAt < GESTURE_WINDOW;
+  }
+
   async function login(){
+    /* Never authenticate merely because a script/autofill invoked adminLogin(). */
+    if(!hasRecentUserGesture()) return;
     if(busy) return;
     busy = true;
 
@@ -41,17 +53,43 @@
         throw new Error('Firebase Authentication is still loading. Please try again.');
       }
 
-      /* One authentication request only. Do not duplicate password verification. */
-      await withTimeout(
+      /* Exactly one password verification request. */
+      const result = await withTimeout(
         fb.signInWithEmailAndPassword(auth, email, password),
         15000,
         'Firebase login timed out. Please check your network and try again.'
       );
 
-      setButton(btn, 'Login successful...', true);
+      const user = result?.user;
+      if(!user) throw new Error('Firebase did not return an authenticated user.');
 
-      /* onAuthStateChanged performs the real admin authorization check. */
-      await new Promise(resolve => setTimeout(resolve, 700));
+      /* Primary admin is authorized directly; other admins must be active in Firestore. */
+      let authorized = user.uid === fb.ADMIN_UID;
+      if(!authorized){
+        const snap = await withTimeout(
+          fb.getDoc(fb.doc(fb.db, 'superAdmins', user.uid)),
+          8000,
+          'Admin authorization check timed out.'
+        );
+        authorized = snap.exists() && snap.data()?.active === true;
+      }
+
+      if(!authorized){
+        await fb.signOut(fb.auth);
+        throw new Error('This Firebase account is not an authorized CREDENCE admin.');
+      }
+
+      setButton(btn, 'Login successful', true);
+
+      /* Explicitly open the dashboard instead of waiting for a second callback. */
+      const gate = document.getElementById('adminGate');
+      const shell = document.getElementById('appShell');
+      const who = document.getElementById('adminEmail');
+      if(who) who.textContent = user.email || 'Firebase Admin';
+      if(gate) gate.style.display = 'none';
+      if(shell) shell.style.display = 'block';
+
+      window.__credenceLoginGestureAt = 0;
 
     }catch(e){
       console.error('CREDENCE admin login error:', e);
@@ -79,6 +117,7 @@
     }
   }
 
+  window.__credenceMarkLoginGesture = markUserGesture;
   window.__credenceAuthHardeningLoaded = true;
   window.adminLogin = login;
 })();
