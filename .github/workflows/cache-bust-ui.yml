@@ -16,7 +16,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Bump UI asset version
-        run: sed -i 's/20260907-dashboard-menu-17/20260908-login-fix-24/g; s/20260908-mobile-fit-20/20260908-login-fix-24/g; s/20260908-login-fix-21/20260908-login-fix-24/g; s/20260908-login-fix-22/20260908-login-fix-24/g; s/20260908-login-fix-23/20260908-login-fix-24/g' index.html
+        run: sed -i 's/20260907-dashboard-menu-17/20260908-login-fix-25/g; s/20260908-mobile-fit-20/20260908-login-fix-25/g; s/20260908-login-fix-21/20260908-login-fix-25/g; s/20260908-login-fix-22/20260908-login-fix-25/g; s/20260908-login-fix-23/20260908-login-fix-25/g; s/20260908-login-fix-24/20260908-login-fix-25/g' index.html
       - name: Commit cache-busting version
         run: |
           if git diff --quiet; then
