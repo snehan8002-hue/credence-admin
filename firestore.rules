@@ -36,8 +36,16 @@ service cloud.firestore {
       allow create: if teacher() || admin() || (student() && request.resource.data.studentUid == request.auth.uid);
       allow update, delete: if teacher() || admin();
     }
-    match /fees/{id} { allow read: if learnerOrTeacher() || admin(); allow create, update, delete: if admin(); }
-    match /payments/{id} { allow read: if learnerOrTeacher() || admin(); allow create, update, delete: if admin(); }
+    match /fees/{id} {
+      allow get: if admin() || teacher() || (student() && resource.data.studentUid == request.auth.uid);
+      allow list: if admin() || teacher();
+      allow create, update, delete: if admin();
+    }
+    match /payments/{id} {
+      allow get: if admin() || teacher() || (student() && resource.data.studentUid == request.auth.uid);
+      allow list: if admin() || teacher();
+      allow create, update, delete: if admin();
+    }
     match /videos/{id} { allow read: if learnerOrTeacher() || admin(); allow create, update, delete: if teacher() || admin(); }
     match /notifications/{id} { allow read: if learnerOrTeacher() || admin(); allow create, update, delete: if teacher() || admin(); }
     match /notes/{id} { allow read: if learnerOrTeacher() || admin(); allow create, update, delete: if teacher() || admin(); }
