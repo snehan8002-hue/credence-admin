@@ -27,7 +27,7 @@
   }
 
   async function login(){
-    /* Never authenticate merely because a script/autofill invoked adminLogin(). */
+    /* Never authenticate merely because a script/autofill invoked the handler. */
     if(!hasRecentUserGesture()) return;
     if(busy) return;
     busy = true;
@@ -53,7 +53,6 @@
         throw new Error('Firebase Authentication is still loading. Please try again.');
       }
 
-      /* Exactly one password verification request. */
       const result = await withTimeout(
         fb.signInWithEmailAndPassword(auth, email, password),
         15000,
@@ -63,9 +62,9 @@
       const user = result?.user;
       if(!user) throw new Error('Firebase did not return an authenticated user.');
 
-      /* Primary admin is authorized directly; other admins must be active in Firestore. */
       let authorized = user.uid === fb.ADMIN_UID;
       if(!authorized){
+        if(typeof fb.getDoc !== 'function') throw new Error('Admin authorization service is not ready. Please try again.');
         const snap = await withTimeout(
           fb.getDoc(fb.doc(fb.db, 'superAdmins', user.uid)),
           8000,
@@ -81,7 +80,6 @@
 
       setButton(btn, 'Login successful', true);
 
-      /* Explicitly open the dashboard instead of waiting for a second callback. */
       const gate = document.getElementById('adminGate');
       const shell = document.getElementById('appShell');
       const who = document.getElementById('adminEmail');
@@ -117,6 +115,8 @@
     }
   }
 
+  /* Private stable entry point: legacy inline code cannot replace this name. */
+  window.__credenceSecureLogin = login;
   window.__credenceMarkLoginGesture = markUserGesture;
   window.__credenceAuthHardeningLoaded = true;
   window.adminLogin = login;
