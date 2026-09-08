@@ -10,8 +10,8 @@ function render(g){if(g.dataset.ceBusinessReady)return;g.dataset.ceBusinessReady
 function startLogin(e){
  if(e && e.isTrusted===false)return;
  if(typeof window.__credenceMarkLoginGesture==='function')window.__credenceMarkLoginGesture();
- if(window.__credenceAuthHardeningLoaded===true && typeof window.adminLogin==='function'){
-   window.adminLogin();
+ if(typeof window.__credenceSecureLogin==='function'){
+   window.__credenceSecureLogin();
    return;
  }
  const err=document.getElementById('loginError');
