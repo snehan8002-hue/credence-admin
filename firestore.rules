@@ -13,7 +13,6 @@ service cloud.firestore {
     function studentId(id) { return exists(/databases/$(database)/documents/students/$(id)) && get(/databases/$(database)/documents/students/$(id)).data.active == true; }
     function chatParticipants(data) { return signedIn() && data.participants is list && data.participants.size() == 2 && data.participants.hasAny([request.auth.uid]) && activePerson(data.participants[0]) && activePerson(data.participants[1]) && !(studentId(data.participants[0]) && studentId(data.participants[1])); }
     function validRegistration(data) { return data.keys().hasAll(['name','email','phone','role','status','createdAt']) && data.keys().hasOnly(['name','email','phone','role','status','createdAt']) && data.name is string && data.email is string && data.phone is string && data.role in ['student','teacher'] && data.status == 'pending' && data.createdAt is timestamp; }
-    function validChatIndex(data,uid) { return signedIn() && data.participants is list && data.participants.size() == 2 && data.participants.hasAny([request.auth.uid]) && data.participants.hasAny([uid]) && activePerson(data.participants[0]) && activePerson(data.participants[1]) && !(studentId(data.participants[0]) && studentId(data.participants[1])); }
     match /registrationRequests/{id} {
       allow create: if !signedIn() && validRegistration(request.resource.data) && request.resource.data.createdAt == request.time;
       allow get, list: if admin();
@@ -58,11 +57,7 @@ service cloud.firestore {
         allow update, delete: if chatParticipants(get(/databases/$(database)/documents/chats/$(chatId)).data) && resource.data.senderUid == request.auth.uid;
       }
     }
-    match /userChats/{uid}/items/{chatId} {
-      allow read, list: if signedIn() && request.auth.uid == uid;
-      allow create, update: if validChatIndex(request.resource.data,uid);
-      allow delete: if signedIn() && request.auth.uid == uid;
-    }
+    match /userChats/{uid}/items/{chatId} { allow read, list, create, update, delete: if signedIn() && request.auth.uid == uid; }
     match /{document=**} { allow read, write: if false; }
   }
 }
