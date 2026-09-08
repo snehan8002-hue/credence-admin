@@ -1,10 +1,11 @@
-name: Deploy CREDENCE Firestore Rules
+name: Deploy CREDENCE Firebase Rules
 
 on:
   push:
     branches: [main]
     paths:
       - 'firestore.rules'
+      - 'storage.rules'
       - 'firebase.json'
       - '.github/workflows/firebase-rules.yml'
   workflow_dispatch:
@@ -34,9 +35,10 @@ jobs:
         run: |
           test -f firebase.json
           test -f firestore.rules
+          test -f storage.rules
           node -e "JSON.parse(require('fs').readFileSync('firebase.json','utf8')); console.log('firebase.json OK')"
 
-      - name: Deploy Firestore rules
+      - name: Deploy Firestore and Storage rules
         shell: bash
         run: |
           set -euo pipefail
@@ -45,11 +47,11 @@ jobs:
             printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$RUNNER_TEMP/firebase-service-account.json"
             trap 'rm -f "$RUNNER_TEMP/firebase-service-account.json"' EXIT
             export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/firebase-service-account.json"
-            echo "Deploying Firestore rules using FIREBASE_SERVICE_ACCOUNT..."
-            firebase deploy --only firestore:rules --project credence-76953 --non-interactive
+            echo "Deploying Firestore and Storage rules using FIREBASE_SERVICE_ACCOUNT..."
+            firebase deploy --only firestore:rules,storage --project credence-76953 --non-interactive
           elif [ -n "${FIREBASE_TOKEN:-}" ]; then
-            echo "Deploying Firestore rules using FIREBASE_TOKEN..."
-            firebase deploy --only firestore:rules --project credence-76953 --non-interactive --token "$FIREBASE_TOKEN"
+            echo "Deploying Firestore and Storage rules using FIREBASE_TOKEN..."
+            firebase deploy --only firestore:rules,storage --project credence-76953 --non-interactive --token "$FIREBASE_TOKEN"
           else
             echo "ERROR: No Firebase credential configured. Add FIREBASE_SERVICE_ACCOUNT (recommended) or FIREBASE_TOKEN in GitHub repository Actions secrets."
             exit 1
