@@ -1,4 +1,4 @@
-import{getAuth,onAuthStateChanged,signOut}from'https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js';import{getFirestore,doc,getDoc}from'https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js';import{getApps}from'https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js';
+import'./credence-admin-remove-fix.js?v=20260908-1';import{getAuth,onAuthStateChanged,signOut}from'https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js';import{getFirestore,doc,getDoc}from'https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js';import{getApps}from'https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js';
 const ADMIN='aBYdbFwbsTUbpmYtoNurxyu3Roj2',app=getApps()[0],auth=getAuth(app),db=getFirestore(app);let expected='student',checking=false,loginAttempted=false;
 function selectedRole(){const b=document.querySelector('.role.on');if(!b)return expected;const t=(b.textContent||'').toLowerCase();return t.includes('teacher')?'teacher':t.includes('admin')?'admin':'student'}
 document.addEventListener('click',e=>{const b=e.target.closest?.('[data-role]');if(b)expected=b.dataset.role},true);
