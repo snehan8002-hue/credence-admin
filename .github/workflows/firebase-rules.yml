@@ -15,6 +15,9 @@ permissions:
 jobs:
   deploy-rules:
     runs-on: ubuntu-latest
+    env:
+      FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+      FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -33,25 +36,21 @@ jobs:
           test -f firestore.rules
           node -e "JSON.parse(require('fs').readFileSync('firebase.json','utf8')); console.log('firebase.json OK')"
 
-      - name: Deploy Firestore rules with service account
-        if: ${{ secrets.FIREBASE_SERVICE_ACCOUNT != '' }}
-        env:
-          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+      - name: Deploy Firestore rules
+        shell: bash
         run: |
-          printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$RUNNER_TEMP/firebase-service-account.json"
-          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/firebase-service-account.json"
-          firebase deploy --only firestore:rules --project credence-76953 --non-interactive
-          rm -f "$RUNNER_TEMP/firebase-service-account.json"
+          set -euo pipefail
 
-      - name: Deploy Firestore rules with legacy token
-        if: ${{ secrets.FIREBASE_SERVICE_ACCOUNT == '' && secrets.FIREBASE_TOKEN != '' }}
-        env:
-          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
-        run: firebase deploy --only firestore:rules --project credence-76953 --non-interactive --token "$FIREBASE_TOKEN"
-
-      - name: Explain missing Firebase credentials
-        if: ${{ secrets.FIREBASE_SERVICE_ACCOUNT == '' && secrets.FIREBASE_TOKEN == '' }}
-        run: |
-          echo "Firestore rules were validated but not deployed because no GitHub Actions Firebase credential is configured."
-          echo "Add FIREBASE_SERVICE_ACCOUNT (recommended) or FIREBASE_TOKEN in repository Settings > Secrets and variables > Actions, then run this workflow again."
-          exit 1
+          if [ -n "${FIREBASE_SERVICE_ACCOUNT:-}" ]; then
+            printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$RUNNER_TEMP/firebase-service-account.json"
+            trap 'rm -f "$RUNNER_TEMP/firebase-service-account.json"' EXIT
+            export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/firebase-service-account.json"
+            echo "Deploying Firestore rules using FIREBASE_SERVICE_ACCOUNT..."
+            firebase deploy --only firestore:rules --project credence-76953 --non-interactive
+          elif [ -n "${FIREBASE_TOKEN:-}" ]; then
+            echo "Deploying Firestore rules using FIREBASE_TOKEN..."
+            firebase deploy --only firestore:rules --project credence-76953 --non-interactive --token "$FIREBASE_TOKEN"
+          else
+            echo "ERROR: No Firebase credential configured. Add FIREBASE_SERVICE_ACCOUNT (recommended) or FIREBASE_TOKEN in GitHub repository Actions secrets."
+            exit 1
+          fi
