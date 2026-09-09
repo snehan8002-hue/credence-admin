@@ -1,0 +1,2 @@
+[functions.credence-storage]
+verify_jwt = false
