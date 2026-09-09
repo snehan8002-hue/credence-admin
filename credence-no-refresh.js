@@ -1,0 +1,1 @@
+(()=>{const native=window.setInterval.bind(window);window.setInterval=function(fn,ms,...args){try{const src=Function.prototype.toString.call(fn);if(ms===6000&&src.includes("s.page==='home'")&&src.includes('s.slide++')&&src.includes('render()'))return 0}catch(e){}return native(fn,ms,...args)}})();
