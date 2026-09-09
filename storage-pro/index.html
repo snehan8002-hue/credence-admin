@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CREDENCE • Secure Storage</title>
+<style>
+:root{--g:#08783f;--g2:#0ca653;--bg:#f4f8f5;--ink:#17352a;--muted:#718078;--line:#dfe9e3;--card:#fff;--danger:#c93636;--shadow:0 18px 50px rgba(15,60,35,.10)}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(135deg,#f5faf7,#eef6f1);color:var(--ink);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif}.wrap{max-width:1050px;margin:auto;padding:28px 16px 60px}.top{display:flex;justify-content:space-between;gap:16px;align-items:center;margin-bottom:22px}.brand{display:flex;align-items:center;gap:12px}.logo{width:48px;height:48px;border-radius:15px;background:linear-gradient(135deg,var(--g),var(--g2));display:grid;place-items:center;color:white;font-size:25px;box-shadow:0 10px 25px #08783f33}.brand h1{font-size:21px;margin:0}.brand p{margin:3px 0 0;color:var(--muted);font-size:12px}.pill{padding:8px 12px;border-radius:999px;background:#e8f6ed;color:var(--g);font-size:12px;font-weight:800}.card{background:var(--card);border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow);padding:22px}.login{max-width:430px;margin:70px auto}.label{font-size:11px;font-weight:900;margin:13px 0 6px;display:block}.input{width:100%;padding:12px;border:1px solid var(--line);border-radius:11px;outline:none;font:inherit}.btn{border:0;border-radius:11px;padding:12px 16px;background:var(--g);color:white;font-weight:900;cursor:pointer}.btn:disabled{opacity:.5;cursor:not-allowed}.btn.alt{background:white;color:var(--g);border:1px solid var(--g)}.btn.danger{background:white;color:var(--danger);border:1px solid #e8bcbc}.grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}.drop{border:2px dashed #b9d7c4;border-radius:18px;padding:28px;text-align:center;background:#fbfefc}.drop strong{display:block;margin-bottom:5px}.actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:14px}.status{margin-top:14px;padding:11px 13px;border-radius:11px;background:#f2f6f3;color:#496056;font-size:12px;word-break:break-word}.status.ok{background:#e9f8ee;color:#08783f}.status.bad{background:#fff0f0;color:#b52d2d}.files{display:grid;gap:9px;margin-top:14px}.file{display:flex;align-items:center;gap:12px;border:1px solid var(--line);border-radius:13px;padding:12px}.file .ico{font-size:22px}.grow{flex:1;min-width:0}.name{font-weight:800;font-size:13px;word-break:break-all}.meta{font-size:11px;color:var(--muted);margin-top:3px}.diag{font-family:ui-monospace,SFMono-Regular,monospace;font-size:11px;white-space:pre-wrap;background:#17251e;color:#d9f3e2;border-radius:13px;padding:13px;margin-top:12px;max-height:220px;overflow:auto}.hidden{display:none!important}.small{font-size:12px;color:var(--muted);line-height:1.5}.spin{display:inline-block;width:13px;height:13px;border:2px solid #ffffff66;border-top-color:white;border-radius:50%;animation:s .7s linear infinite;vertical-align:-2px}@keyframes s{to{transform:rotate(360deg)}}
+@media(max-width:760px){.grid{grid-template-columns:1fr}.top{align-items:flex-start}.pill{display:none}}
+</style>
+</head>
+<body>
+<div id="login" class="wrap login"><div class="card"><div class="brand"><div class="logo">☁</div><div><h1>CREDENCE Secure Storage</h1><p>Administrator access</p></div></div><p class="small">Sign in with the same authorized CREDENCE Firebase administrator account.</p><label class="label">Admin email</label><input id="email" class="input" type="email" autocomplete="username"><label class="label">Password</label><input id="password" class="input" type="password" autocomplete="current-password"><div class="actions"><button id="loginBtn" class="btn">Sign in securely</button></div><div id="loginStatus" class="status"></div></div></div>
+<div id="app" class="wrap hidden"><div class="top"><div class="brand"><div class="logo">☁</div><div><h1>CREDENCE Secure Storage</h1><p>Private document vault • PDF only • 50 MB maximum</p></div></div><div class="pill">● ADMIN SECURE</div></div><div class="grid"><section class="card"><h2 style="margin-top:0">Upload document</h2><div class="drop"><div style="font-size:34px">📄</div><strong>Select a PDF</strong><div class="small">Files are sent through the protected CREDENCE storage service.</div><input id="file" type="file" accept="application/pdf,.pdf" style="margin-top:16px;max-width:100%"></div><div class="actions"><button id="uploadBtn" class="btn">Upload PDF</button><button id="healthBtn" class="btn alt">System check</button><button id="logoutBtn" class="btn alt">Sign out</button></div><div id="status" class="status">Ready.</div><div id="diag" class="diag hidden"></div></section><section class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><h2 style="margin:0">Stored documents</h2><button id="refreshBtn" class="btn alt">Refresh</button></div><div id="files" class="files"><div class="small">Sign in to load documents.</div></div></section></div></div>
+<script type="module">
+import{initializeApp}from'https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js';
+import{getAuth,onAuthStateChanged,signInWithEmailAndPassword,signOut,getIdToken}from'https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js';
+const cfg={apiKey:'AIzaSyCka8C2otBgwXwT2Qtg5bZcPG3J_84Wgs8',authDomain:'credence-76953.firebaseapp.com',projectId:'credence-76953',storageBucket:'credence-76953.firebasestorage.app',messagingSenderId:'973979489973',appId:'1:973979489973:web:ac260b237071f7007050fc'};
+const ADMIN_UID='aBYdbFwbsTUbpmYtoNurxyu3Roj2';
+const FN='https://tasoycsbzceohgjxizdp.supabase.co/functions/v1/super-handler';
+const auth=getAuth(initializeApp(cfg));
+let user=null;
+const $=id=>document.getElementById(id);
+function status(text,bad=false){$('status').textContent=text;$('status').className='status '+(bad?'bad':'')}
+function loginStatus(text,bad=false){$('loginStatus').textContent=text;$('loginStatus').className='status '+(bad?'bad':'')}
+function diag(text){$('diag').textContent=text;$('diag').classList.remove('hidden')}
+async function request(action,file=null,path=null){
+ if(!user||user.uid!==ADMIN_UID)throw Error('Authorized CREDENCE admin session required.');
+ const token=await getIdToken(user,true);
+ const form=new FormData();form.append('firebaseToken',token);form.append('action',action);if(file)form.append('file',file);if(path)form.append('path',path);
+ let response;
+ try{response=await fetch(FN,{method:'POST',mode:'cors',credentials:'omit',body:form,cache:'no-store'})}catch(e){throw Error('Browser could not complete the cross-origin request. '+(e?.message||'Failed to fetch'))}
+ const raw=await response.text();let data={};try{data=JSON.parse(raw)}catch{}
+ if(!response.ok)throw Error('Supabase '+response.status+': '+(data.error||raw||'Request failed'));
+ if(!data.success)throw Error(data.error||'Storage request failed');
+ return data;
+}
+async function health(){
+ diag('Testing endpoint…\n'+FN);
+ try{const r=await fetch(FN,{method:'GET',mode:'cors',credentials:'omit',cache:'no-store'});const t=await r.text();diag('GET test completed. HTTP '+r.status+'\n'+t+'\n\nIf this result is visible here, the browser can read the function response and CORS is working for GET.');}catch(e){diag('GET CORS test FAILED before a response could be read.\n'+(e?.message||e)+'\n\nThis points to Supabase gateway/CORS deployment, not Firebase login or the PDF.')}
+}
+async function load(){status('Loading stored documents…');try{const d=await request('list');$('files').innerHTML='';const list=d.files||[];if(!list.length){$('files').innerHTML='<div class="small">No documents uploaded yet.</div>'}for(const x of list){const row=document.createElement('div');row.className='file';row.innerHTML='<div class="ico">📕</div><div class="grow"><div class="name"></div><div class="meta"></div></div><div class="actions" style="margin:0"><button class="btn alt view">View</button><button class="btn danger del">Delete</button></div>';row.querySelector('.name').textContent=x.name;row.querySelector('.meta').textContent=x.created_at?new Date(x.created_at).toLocaleString():'';row.querySelector('.view').onclick=async()=>{try{const s=await request('signed',null,'notes/'+x.name);location.href=s.url}catch(e){status('❌ '+e.message,true)}};row.querySelector('.del').onclick=async()=>{if(!confirm('Delete '+x.name+'?'))return;try{await request('delete',null,'notes/'+x.name);await load()}catch(e){status('❌ '+e.message,true)}};$('files').append(row)}status(list.length?'Documents loaded.':'No documents uploaded yet.')}catch(e){status('❌ '+e.message,true)}}
+$('loginBtn').onclick=async()=>{const email=$('email').value.trim(),password=$('password').value;if(!email||!password)return loginStatus('Enter your admin email and password.',true);$('loginBtn').disabled=true;$('loginBtn').innerHTML='<span class="spin"></span> Signing in';loginStatus('');try{await signInWithEmailAndPassword(auth,email,password)}catch(e){loginStatus((e?.code||'Login error')+': '+(e?.message||'Unable to sign in.'),true)}finally{$('loginBtn').disabled=false;$('loginBtn').textContent='Sign in securely'}};
+$('password').addEventListener('keydown',e=>{if(e.key==='Enter')$('loginBtn').click()});
+$('uploadBtn').onclick=async()=>{const f=$('file').files[0];if(!f)return status('Choose a PDF first.',true);if(f.type!=='application/pdf'&&!f.name.toLowerCase().endsWith('.pdf'))return status('Only PDF files are allowed.',true);if(f.size>50*1024*1024)return status('Maximum file size is 50 MB.',true);$('uploadBtn').disabled=true;status('Uploading securely…');try{const d=await request('upload',f);status('✅ Uploaded successfully: '+d.fileName);$('file').value='';await load()}catch(e){status('❌ '+e.message,true);await health()}finally{$('uploadBtn').disabled=false}};
+$('refreshBtn').onclick=load;$('healthBtn').onclick=health;$('logoutBtn').onclick=()=>signOut(auth);
+onAuthStateChanged(auth,u=>{if(u&&u.uid===ADMIN_UID){user=u;$('login').classList.add('hidden');$('app').classList.remove('hidden');load()}else{user=null;$('login').classList.remove('hidden');$('app').classList.add('hidden');if(u)signOut(auth)}});
+</script>
+</body>
+</html>
