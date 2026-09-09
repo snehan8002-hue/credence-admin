@@ -27,7 +27,6 @@ const firebaseConfig={apiKey:'AIzaSyCka8C2otBgwXwT2Qtg5bZcPG3J_84Wgs8',authDomai
 const ADMIN_UID='aBYdbFwbsTUbpmYtoNurxyu3Roj2';
 const FN='https://tasoycsbzceohgjxizdp.supabase.co/functions/v1/credence-storage';
 const auth=getAuth(initializeApp(firebaseConfig));
-const frame=document.getElementById('adminFrame');
 const launch=document.getElementById('storageLaunch');
 const panel=document.getElementById('panel');
 const statusEl=document.getElementById('status');
@@ -45,9 +44,9 @@ async function loadFiles(){try{statusEl.textContent='';const data=await call('li
 async function viewFile(name){try{statusEl.textContent='Creating secure link…';const data=await call('signed',null,'notes/'+name);window.open(data.url,'_blank','noopener');statusEl.textContent='Secure link created (10 minutes).'}catch(e){statusEl.textContent=e.message}}
 async function deleteFile(name){if(!confirm('Delete '+name+'?'))return;try{statusEl.textContent='Deleting…';await call('delete',null,'notes/'+name);statusEl.textContent='Deleted.';await loadFiles()}catch(e){statusEl.textContent=e.message}}
 function formatBytes(n){if(!n)return '';const u=['B','KB','MB','GB'];let i=0;while(n>=1024&&i<u.length-1){n/=1024;i++}return n.toFixed(i?1:0)+' '+u[i]}
-function esc(s){return String(s).replace(/[&<>\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c]))}
+function esc(s){return String(s).replace(/[&<>\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\\"':'&quot;',"'":'&#39;'}[c]))}
+window.openPanel=openPanel;window.closePanel=closePanel;window.uploadFile=uploadFile;window.loadFiles=loadFiles;window.viewFile=viewFile;window.deleteFile=deleteFile;
 launch.onclick=openPanel;
-window.addEventListener('message',()=>{});
 </script>
 </body>
 </html>
