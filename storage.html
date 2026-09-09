@@ -3,158 +3,303 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>CREDENCE Storage</title>
+<title>CREDENCE Admin — Supabase Storage</title>
+
 <style>
 :root{
   --g:#08783f;
-  --g2:#0b9b55;
-  --bg:#f5f7f6;
+  --bg:#f3f7f4;
   --card:#fff;
-  --text:#17201b;
-  --muted:#66736b;
-  --border:#dce4df;
-  --danger:#c62828;
+  --ink:#17352a;
+  --muted:#718078;
+  --line:#e1eae4;
+  --red:#d94747;
+  --shadow:0 12px 35px rgba(10,70,40,.14)
 }
-*{box-sizing:border-box}
-body{
+
+*{
+  box-sizing:border-box
+}
+
+html,body{
   margin:0;
-  font-family:Arial,sans-serif;
+  height:100%;
   background:var(--bg);
-  color:var(--text);
+  font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  color:var(--ink)
 }
-header{
-  background:var(--g);
-  color:white;
-  padding:18px 20px;
+
+#app{
+  height:100%;
+  position:relative
 }
-header h1{
-  margin:0;
-  font-size:22px;
-}
-header p{
-  margin:5px 0 0;
-  opacity:.85;
-}
-main{
-  max-width:850px;
-  margin:25px auto;
-  padding:0 16px;
-}
-.card{
-  background:var(--card);
-  border:1px solid var(--border);
-  border-radius:14px;
-  padding:20px;
-  margin-bottom:18px;
-  box-shadow:0 3px 12px rgba(0,0,0,.05);
-}
-h2{
-  margin-top:0;
-  font-size:19px;
-}
-button{
+
+iframe{
   border:0;
-  border-radius:9px;
-  padding:11px 16px;
-  background:var(--g);
-  color:white;
-  font-weight:bold;
-  cursor:pointer;
-}
-button:disabled{
-  opacity:.55;
-  cursor:not-allowed;
-}
-input[type=file]{
   width:100%;
-  padding:12px;
-  border:1px dashed var(--border);
-  border-radius:9px;
-  margin:8px 0 14px;
-  background:#fafcfb;
+  height:100%;
+  display:block
 }
-.status{
-  margin-top:12px;
-  padding:10px;
-  border-radius:8px;
-  background:#f0f5f2;
-  color:var(--muted);
-  white-space:pre-wrap;
-  word-break:break-word;
+
+.storage-launch{
+  position:fixed;
+  right:18px;
+  bottom:18px;
+  z-index:50;
+  border:0;
+  border-radius:14px;
+  background:var(--g);
+  color:#fff;
+  padding:13px 16px;
+  font-weight:900;
+  box-shadow:var(--shadow);
+  cursor:pointer
 }
-.error{
-  background:#fff0f0;
-  color:var(--danger);
+
+.storage-launch:disabled{
+  opacity:.5;
+  cursor:not-allowed
 }
-.file{
-  padding:13px 0;
-  border-bottom:1px solid var(--border);
-}
-.file:last-child{
-  border-bottom:0;
-}
-.file-name{
-  font-weight:bold;
-  word-break:break-word;
-}
-.file-meta{
-  color:var(--muted);
-  font-size:13px;
-  margin-top:4px;
-}
-.file-actions{
-  margin-top:9px;
-  display:flex;
-  gap:8px;
-  flex-wrap:wrap;
-}
-.secondary{
-  background:#e9efeb;
-  color:var(--g);
-}
-.danger{
-  background:#c62828;
-}
-.hidden{
+
+.panel{
+  position:fixed;
+  right:18px;
+  top:18px;
+  bottom:18px;
+  width:min(430px,calc(100% - 36px));
+  background:#fff;
+  border:1px solid var(--line);
+  border-radius:20px;
+  box-shadow:var(--shadow);
+  z-index:60;
   display:none;
+  flex-direction:column;
+  overflow:hidden
+}
+
+.panel.show{
+  display:flex
+}
+
+.head{
+  padding:16px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:center;
+  gap:10px
+}
+
+.head .grow{
+  flex:1
+}
+
+.head h2{
+  margin:0;
+  font-size:18px
+}
+
+.head p{
+  margin:3px 0 0;
+  color:var(--muted);
+  font-size:11px
+}
+
+.close{
+  border:0;
+  background:#edf5ef;
+  border-radius:50%;
+  width:34px;
+  height:34px;
+  cursor:pointer;
+  font-size:18px
+}
+
+.body{
+  padding:16px;
+  overflow:auto
+}
+
+.drop{
+  border:1px dashed #9bb9a6;
+  border-radius:14px;
+  padding:18px;
+  text-align:center;
+  background:#f7fbf8
+}
+
+.drop input{
+  width:100%;
+  margin-top:10px
+}
+
+.btn{
+  border:0;
+  border-radius:10px;
+  background:var(--g);
+  color:#fff;
+  padding:10px 13px;
+  font-weight:800;
+  cursor:pointer
+}
+
+.btn.alt{
+  background:#fff;
+  color:var(--g);
+  border:1px solid var(--g)
+}
+
+.btn:disabled{
+  opacity:.5;
+  cursor:not-allowed
+}
+
+.status{
+  margin:10px 0;
+  color:var(--muted);
+  font-size:12px;
+  min-height:16px;
+  word-break:break-word
+}
+
+.files{
+  display:grid;
+  gap:8px;
+  margin-top:14px
+}
+
+.file{
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:11px;
+  display:flex;
+  gap:10px;
+  align-items:center
+}
+
+.file .grow{
+  min-width:0
+}
+
+.name{
+  font-weight:800;
+  font-size:12px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap
+}
+
+.meta{
+  font-size:10px;
+  color:var(--muted);
+  margin-top:3px
+}
+
+.actions{
+  display:flex;
+  gap:5px
+}
+
+.empty{
+  color:var(--muted);
+  font-size:12px;
+  text-align:center;
+  padding:20px
+}
+
+.danger{
+  color:var(--red)!important;
+  border-color:#efcaca!important
 }
 </style>
 </head>
 
 <body>
 
-<header>
-  <h1>CREDENCE Storage</h1>
-  <p>Admin PDF Storage</p>
-</header>
+<div id="app">
+  <iframe
+    id="adminFrame"
+    src="./index.html"
+    title="CREDENCE Admin">
+  </iframe>
 
-<main>
+  <button
+    id="storageLaunch"
+    class="storage-launch"
+    disabled>
+    ☁️ Storage
+  </button>
+</div>
 
-  <div class="card">
-    <h2>Upload PDF</h2>
+<section id="panel" class="panel">
 
-    <input id="fileInput" type="file" accept="application/pdf,.pdf">
-
-    <button id="uploadBtn">Upload PDF</button>
-
-    <div id="uploadStatus" class="status">
-      Select a PDF to upload.
+  <div class="head">
+    <div class="grow">
+      <h2>CREDENCE Storage</h2>
+      <p>Private Supabase bucket • credence-files</p>
     </div>
-  </div>
 
-  <div class="card">
-    <h2>Uploaded Files</h2>
-
-    <button id="refreshBtn" class="secondary">
-      Refresh Files
+    <button
+      class="close"
+      onclick="closePanel()">
+      ×
     </button>
-
-    <div id="fileList" class="status">
-      Loading...
-    </div>
   </div>
 
-</main>
+  <div class="body">
+
+    <div class="drop">
+
+      <b>Upload study PDF</b>
+
+      <div class="meta">
+        PDF only • maximum 50 MB
+      </div>
+
+      <input
+        id="file"
+        type="file"
+        accept="application/pdf,.pdf">
+
+      <div style="margin-top:10px">
+
+        <button
+          id="uploadButton"
+          class="btn"
+          onclick="uploadFile()">
+          Upload PDF
+        </button>
+
+      </div>
+
+    </div>
+
+    <div id="status" class="status"></div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center">
+
+      <b>Stored files</b>
+
+      <button
+        class="btn alt"
+        onclick="loadFiles()">
+        Refresh
+      </button>
+
+    </div>
+
+    <div
+      id="files"
+      class="files">
+
+      <div class="empty">
+        Login to the Admin panel first.
+      </div>
+
+    </div>
+
+  </div>
+
+</section>
 
 <script type="module">
 
@@ -169,9 +314,11 @@ import {
 } from 'https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js'
 
 
-/* Firebase */
+/* =========================
+   FIREBASE
+========================= */
 
-const FIREBASE_CONFIG = {
+const firebaseConfig = {
   apiKey:'AIzaSyCka8C2otBgwXwT2Qtg5bZcPG3J_84Wgs8',
   authDomain:'credence-76953.firebaseapp.com',
   projectId:'credence-76953',
@@ -180,117 +327,282 @@ const FIREBASE_CONFIG = {
   appId:'1:973979489973:web:ac260b237071f7007050fc'
 }
 
-const ADMIN_UID = 'aBYdbFwbsTUbpmYtoNurxyu3Roj2'
+const ADMIN_UID =
+  'aBYdbFwbsTUbpmYtoNurxyu3Roj2'
 
 
-/* Supabase Edge Function */
+/* =========================
+   SUPABASE EDGE FUNCTION
+========================= */
 
 const FN =
   'https://tasoycsbzceohgjxizdp.supabase.co/functions/v1/super-handler'
 
 
-const app = initializeApp(FIREBASE_CONFIG)
-const auth = getAuth(app)
+/* =========================
+   APP
+========================= */
+
+const firebaseApp =
+  initializeApp(firebaseConfig)
+
+const auth =
+  getAuth(firebaseApp)
 
 
 let currentUser = null
 
 
-const fileInput =
-  document.getElementById('fileInput')
+const launch =
+  document.getElementById('storageLaunch')
 
-const uploadBtn =
-  document.getElementById('uploadBtn')
+const panel =
+  document.getElementById('panel')
 
-const refreshBtn =
-  document.getElementById('refreshBtn')
+const statusEl =
+  document.getElementById('status')
 
-const uploadStatus =
-  document.getElementById('uploadStatus')
+const filesEl =
+  document.getElementById('files')
 
-const fileList =
-  document.getElementById('fileList')
+const uploadButton =
+  document.getElementById('uploadButton')
 
 
-function setStatus(element,message,isError=false){
+/* =========================
+   STATUS
+========================= */
 
-  element.textContent = message
-
-  element.classList.toggle('error',isError)
-
+function setStatus(message){
+  statusEl.textContent = message
 }
 
+
+/* =========================
+   AUTH
+========================= */
+
+function setReady(user){
+
+  currentUser =
+    user && user.uid === ADMIN_UID
+      ? user
+      : null
+
+  launch.disabled =
+    !currentUser
+
+  launch.title =
+    currentUser
+      ? 'Open private Supabase Storage'
+      : 'Login as the authorized CREDENCE admin'
+
+  if(!currentUser){
+
+    closePanel()
+
+    filesEl.innerHTML =
+      '<div class="empty">Login to the Admin panel first.</div>'
+
+  }
+}
+
+
+onAuthStateChanged(
+  auth,
+  setReady
+)
+
+
+/* =========================
+   PANEL
+========================= */
+
+function openPanel(){
+
+  if(!currentUser){
+
+    setStatus(
+      'Please login as the authorized CREDENCE admin first.'
+    )
+
+    return
+  }
+
+  panel.classList.add('show')
+
+  loadFiles()
+}
+
+
+function closePanel(){
+
+  panel.classList.remove('show')
+}
+
+
+/* =========================
+   FIREBASE TOKEN
+========================= */
 
 async function getFirebaseToken(){
 
   if(!currentUser){
-    throw new Error('Admin is not signed in')
+
+    throw new Error(
+      'Please login as the authorized CREDENCE admin first.'
+    )
+
   }
 
   if(currentUser.uid !== ADMIN_UID){
-    throw new Error('Unauthorized CREDENCE admin')
+
+    throw new Error(
+      'Unauthorized CREDENCE admin'
+    )
+
   }
 
-  return await getIdToken(currentUser,true)
+  return await getIdToken(
+    currentUser,
+    true
+  )
 }
 
 
-async function callStorage(action,file=null,path=null){
+/* =========================
+   SUPABASE REQUEST
+========================= */
 
-  const idToken = await getFirebaseToken()
+async function callStorage(
+  action,
+  file = null,
+  path = null
+){
 
-  const form = new FormData()
+  const idToken =
+    await getFirebaseToken()
 
-  form.append('action',action)
+
+  const form =
+    new FormData()
+
+
+  /*
+    IMPORTANT:
+    Firebase token is sent inside
+    FormData instead of Authorization
+    header to avoid browser CORS
+    preflight problems.
+  */
+
+  form.append(
+    'firebaseToken',
+    idToken
+  )
+
+  form.append(
+    'action',
+    action
+  )
+
 
   if(file){
-    form.append('file',file)
+
+    form.append(
+      'file',
+      file
+    )
+
   }
+
 
   if(path){
-    form.append('path',path)
+
+    form.append(
+      'path',
+      path
+    )
+
   }
 
 
-  const response = await fetch(FN,{
-    method:'POST',
-
-    headers:{
-      Authorization:'Bearer '+idToken
-    },
-
-    body:form
-  })
-
-
-  let data
+  let response
 
   try{
-    data = await response.json()
-  }catch{
-    throw new Error(
-      'Supabase returned a non-JSON response ('+
-      response.status+')'
+
+    response =
+      await fetch(
+        FN,
+        {
+          method:'POST',
+          body:form
+        }
+      )
+
+  }catch(error){
+
+    console.error(
+      'Storage network error:',
+      error
     )
+
+    throw new Error(
+      'Network/CORS error: ' +
+      (
+        error instanceof Error
+          ? error.message
+          : 'Failed to fetch'
+      )
+    )
+
+  }
+
+
+  const raw =
+    await response.text()
+
+
+  let data = {}
+
+  try{
+
+    data =
+      JSON.parse(raw)
+
+  }catch{
+
+    data = {}
+
   }
 
 
   if(!response.ok){
 
+    const detail =
+      data.error ||
+      data.message ||
+      raw ||
+      'No response body'
+
     throw new Error(
-      data?.error ||
-      data?.message ||
-      `Supabase request failed (${response.status})`
+      'Supabase ' +
+      response.status +
+      ': ' +
+      detail
     )
+
   }
 
 
-  if(data?.success === false){
+  if(!data.success){
 
     throw new Error(
-      data?.error ||
+      data.error ||
+      data.message ||
       'Storage request failed'
     )
+
   }
 
 
@@ -298,163 +610,144 @@ async function callStorage(action,file=null,path=null){
 }
 
 
-/* Authentication */
+/* =========================
+   UPLOAD
+========================= */
 
-onAuthStateChanged(auth,async user=>{
+async function uploadFile(){
 
-  currentUser = user
+  const input =
+    document.getElementById('file')
 
-  if(!user){
+  const file =
+    input.files[0]
 
-    setStatus(
-      uploadStatus,
-      'Please sign in to CREDENCE Admin.',
-      true
-    )
-
-    fileList.textContent =
-      'Please sign in to view files.'
-
-    uploadBtn.disabled = true
-    refreshBtn.disabled = true
-
-    return
-  }
-
-
-  if(user.uid !== ADMIN_UID){
-
-    setStatus(
-      uploadStatus,
-      'Unauthorized CREDENCE admin.',
-      true
-    )
-
-    fileList.textContent =
-      'Unauthorized admin.'
-
-    uploadBtn.disabled = true
-    refreshBtn.disabled = true
-
-    return
-  }
-
-
-  uploadBtn.disabled = false
-  refreshBtn.disabled = false
-
-  setStatus(
-    uploadStatus,
-    'Admin authenticated. Select a PDF.'
-  )
-
-  await loadFiles()
-
-})
-
-
-/* Upload */
-
-uploadBtn.addEventListener('click',async()=>{
-
-  const file = fileInput.files?.[0]
 
   if(!file){
 
     setStatus(
-      uploadStatus,
-      'Please select a PDF first.',
-      true
+      'Choose a PDF first.'
     )
 
     return
+
   }
 
 
   if(
     file.type !== 'application/pdf' &&
-    !file.name.toLowerCase().endsWith('.pdf')
+    !file.name
+      .toLowerCase()
+      .endsWith('.pdf')
   ){
 
     setStatus(
-      uploadStatus,
-      'Only PDF files are allowed.',
-      true
+      'Only PDF files are allowed.'
     )
 
     return
+
   }
 
 
-  if(file.size > 50 * 1024 * 1024){
+  if(
+    file.size >
+    50 * 1024 * 1024
+  ){
 
     setStatus(
-      uploadStatus,
-      'PDF must be 50 MB or smaller.',
-      true
+      'PDF must be 50 MB or smaller.'
     )
 
     return
+
   }
 
 
-  uploadBtn.disabled = true
-
-  setStatus(
-    uploadStatus,
-    'Uploading PDF...'
-  )
+  uploadButton.disabled = true
 
 
   try{
 
-    const data =
-      await callStorage('upload',file)
-
     setStatus(
-      uploadStatus,
-      '✅ Upload successful: '+data.fileName
+      'Uploading securely…'
     )
 
-    fileInput.value = ''
+
+    const data =
+      await callStorage(
+        'upload',
+        file
+      )
+
+
+    input.value = ''
+
+
+    setStatus(
+      '✅ Upload complete: ' +
+      (
+        data.fileName ||
+        file.name
+      )
+    )
+
 
     await loadFiles()
 
   }catch(error){
 
-    console.error(error)
+    console.error(
+      'Upload error:',
+      error
+    )
 
     setStatus(
-      uploadStatus,
-      '❌ '+(
+      '❌ ' +
+      (
         error instanceof Error
           ? error.message
           : 'Upload failed'
-      ),
-      true
+      )
     )
 
   }finally{
 
-    uploadBtn.disabled = false
+    uploadButton.disabled = false
 
   }
 
-})
+}
 
 
-/* List */
+/* =========================
+   LIST FILES
+========================= */
 
 async function loadFiles(){
 
-  fileList.textContent =
-    'Loading files...'
+  if(!currentUser){
+
+    filesEl.innerHTML =
+      '<div class="empty">Login to the Admin panel first.</div>'
+
+    return
+
+  }
 
 
   try{
 
+    setStatus(
+      'Loading files…'
+    )
+
+
     const data =
-      await callStorage('list')
+      await callStorage(
+        'list'
+      )
+
 
     const files =
       Array.isArray(data.files)
@@ -464,14 +757,17 @@ async function loadFiles(){
 
     if(!files.length){
 
-      fileList.textContent =
-        'No PDF files uploaded yet.'
+      filesEl.innerHTML =
+        '<div class="empty">No files uploaded yet.</div>'
+
+      setStatus('')
 
       return
+
     }
 
 
-    fileList.innerHTML = ''
+    filesEl.innerHTML = ''
 
 
     for(const file of files){
@@ -479,171 +775,373 @@ async function loadFiles(){
       const row =
         document.createElement('div')
 
-      row.className = 'file'
+      row.className =
+        'file'
+
+
+      const icon =
+        document.createElement('div')
+
+      icon.textContent =
+        '📄'
+
+
+      const content =
+        document.createElement('div')
+
+      content.className =
+        'grow'
 
 
       const name =
         document.createElement('div')
 
-      name.className = 'file-name'
+      name.className =
+        'name'
 
       name.textContent =
-        file.name || 'Unnamed file'
+        file.name ||
+        'Unnamed file'
 
 
       const meta =
         document.createElement('div')
 
-      meta.className = 'file-meta'
+      meta.className =
+        'meta'
 
-      const size =
-        typeof file.metadata?.size === 'number'
-          ? Math.round(file.metadata.size / 1024)
-          : null
 
-      meta.textContent =
-        size !== null
-          ? `${size} KB`
-          : 'PDF'
+      if(file.metadata?.size){
+
+        meta.textContent =
+          formatBytes(
+            Number(file.metadata.size)
+          )
+
+      }
+
+
+      if(file.created_at){
+
+        meta.textContent +=
+          (
+            meta.textContent
+              ? ' • '
+              : ''
+          ) +
+          new Date(
+            file.created_at
+          ).toLocaleString()
+
+      }
+
+
+      content.appendChild(
+        name
+      )
+
+      content.appendChild(
+        meta
+      )
 
 
       const actions =
         document.createElement('div')
 
       actions.className =
-        'file-actions'
+        'actions'
 
 
       const view =
         document.createElement('button')
 
+      view.className =
+        'btn alt'
+
       view.textContent =
-        'Open PDF'
+        'View'
 
 
-      view.addEventListener('click',async()=>{
-
-        try{
-
-          view.disabled = true
-
-          const path =
-            'notes/'+file.name
-
-          const data =
-            await callStorage('signed',null,path)
-
-          if(!data.url){
-
-            throw new Error(
-              'No signed URL returned'
-            )
-          }
-
-          window.open(
-            data.url,
-            '_blank'
-          )
-
-        }catch(error){
-
-          alert(
-            error instanceof Error
-              ? error.message
-              : 'Unable to open PDF'
-          )
-
-        }finally{
-
-          view.disabled = false
-
-        }
-
-      })
+      view.onclick =
+        () => viewFile(file.name)
 
 
       const del =
         document.createElement('button')
 
+      del.className =
+        'btn alt danger'
+
       del.textContent =
         'Delete'
 
-      del.className =
-        'danger'
+
+      del.onclick =
+        () => deleteFile(file.name)
 
 
-      del.addEventListener('click',async()=>{
+      actions.appendChild(
+        view
+      )
 
-        if(!confirm(
-          'Delete '+file.name+'?'
-        )) return
-
-
-        try{
-
-          del.disabled = true
-
-          const path =
-            'notes/'+file.name
-
-          await callStorage(
-            'delete',
-            null,
-            path
-          )
-
-          await loadFiles()
-
-        }catch(error){
-
-          alert(
-            error instanceof Error
-              ? error.message
-              : 'Delete failed'
-          )
-
-          del.disabled = false
-
-        }
-
-      })
+      actions.appendChild(
+        del
+      )
 
 
-      actions.appendChild(view)
-      actions.appendChild(del)
+      row.appendChild(
+        icon
+      )
 
-      row.appendChild(name)
-      row.appendChild(meta)
-      row.appendChild(actions)
+      row.appendChild(
+        content
+      )
 
-      fileList.appendChild(row)
+      row.appendChild(
+        actions
+      )
+
+
+      filesEl.appendChild(
+        row
+      )
 
     }
 
+
+    setStatus('')
+
   }catch(error){
 
-    console.error(error)
+    console.error(
+      'List error:',
+      error
+    )
 
-    fileList.textContent =
-      '❌ '+(
+
+    filesEl.innerHTML =
+      '<div class="empty">' +
+      escapeHtml(
         error instanceof Error
           ? error.message
           : 'Unable to load files'
-      )
-
-    fileList.classList.add('error')
+      ) +
+      '</div>'
 
   }
 
 }
 
 
-/* Refresh */
+/* =========================
+   VIEW FILE
+========================= */
 
-refreshBtn.addEventListener(
-  'click',
+async function viewFile(name){
+
+  try{
+
+    setStatus(
+      'Creating secure link…'
+    )
+
+
+    const data =
+      await callStorage(
+        'signed',
+        null,
+        'notes/' + name
+      )
+
+
+    if(!data.url){
+
+      throw new Error(
+        'No secure URL returned'
+      )
+
+    }
+
+
+    window.open(
+      data.url,
+      '_blank',
+      'noopener'
+    )
+
+
+    setStatus(
+      'Secure link created. It expires in 10 minutes.'
+    )
+
+  }catch(error){
+
+    console.error(
+      'View error:',
+      error
+    )
+
+
+    setStatus(
+      '❌ ' +
+      (
+        error instanceof Error
+          ? error.message
+          : 'Unable to open PDF'
+      )
+    )
+
+  }
+
+}
+
+
+/* =========================
+   DELETE FILE
+========================= */
+
+async function deleteFile(name){
+
+  if(
+    !confirm(
+      'Delete ' + name + '?'
+    )
+  ){
+
+    return
+
+  }
+
+
+  try{
+
+    setStatus(
+      'Deleting…'
+    )
+
+
+    await callStorage(
+      'delete',
+      null,
+      'notes/' + name
+    )
+
+
+    setStatus(
+      'Deleted.'
+    )
+
+
+    await loadFiles()
+
+  }catch(error){
+
+    console.error(
+      'Delete error:',
+      error
+    )
+
+
+    setStatus(
+      '❌ ' +
+      (
+        error instanceof Error
+          ? error.message
+          : 'Delete failed'
+      )
+    )
+
+  }
+
+}
+
+
+/* =========================
+   HELPERS
+========================= */
+
+function formatBytes(bytes){
+
+  if(!bytes){
+    return ''
+  }
+
+
+  const units =
+    ['B','KB','MB','GB']
+
+
+  let i = 0
+
+
+  let value =
+    Number(bytes)
+
+
+  while(
+    value >= 1024 &&
+    i < units.length - 1
+  ){
+
+    value /= 1024
+
+    i++
+
+  }
+
+
+  return (
+    value.toFixed(
+      i ? 1 : 0
+    ) +
+    ' ' +
+    units[i]
+  )
+
+}
+
+
+function escapeHtml(value){
+
+  return String(value)
+    .replace(
+      /[&<>"']/g,
+      character => ({
+        '&':'&amp;',
+        '<':'&lt;',
+        '>':'&gt;',
+        '"':'&quot;',
+        "'":'&#39;'
+      })[character]
+    )
+
+}
+
+
+/* =========================
+   GLOBAL BUTTONS
+========================= */
+
+window.openPanel =
+  openPanel
+
+window.closePanel =
+  closePanel
+
+window.uploadFile =
+  uploadFile
+
+window.loadFiles =
   loadFiles
-)
+
+window.viewFile =
+  viewFile
+
+window.deleteFile =
+  deleteFile
+
+launch.onclick =
+  openPanel
 
 </script>
 
