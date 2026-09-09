@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CREDENCE Admin — Supabase Storage</title>
+<style>
+:root{--g:#08783f;--bg:#f3f7f4;--card:#fff;--ink:#17352a;--muted:#718078;--line:#e1eae4;--red:#d94747;--shadow:0 12px 35px rgba(10,70,40,.14)}
+*{box-sizing:border-box}html,body{margin:0;height:100%;background:var(--bg);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:var(--ink)}#app{height:100%;position:relative}iframe{border:0;width:100%;height:100%;display:block}.storage-launch{position:fixed;right:18px;bottom:18px;z-index:50;border:0;border-radius:14px;background:var(--g);color:#fff;padding:13px 16px;font-weight:900;box-shadow:var(--shadow);cursor:pointer}.storage-launch:disabled{opacity:.5;cursor:not-allowed}.panel{position:fixed;right:18px;top:18px;bottom:18px;width:min(430px,calc(100% - 36px));background:#fff;border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow);z-index:60;display:none;flex-direction:column;overflow:hidden}.panel.show{display:flex}.head{padding:16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}.head .grow{flex:1}.head h2{margin:0;font-size:18px}.head p{margin:3px 0 0;color:var(--muted);font-size:11px}.close{border:0;background:#edf5ef;border-radius:50%;width:34px;height:34px;cursor:pointer;font-size:18px}.body{padding:16px;overflow:auto}.drop{border:1px dashed #9bb9a6;border-radius:14px;padding:18px;text-align:center;background:#f7fbf8}.drop input{width:100%;margin-top:10px}.btn{border:0;border-radius:10px;background:var(--g);color:#fff;padding:10px 13px;font-weight:800;cursor:pointer}.btn.alt{background:#fff;color:var(--g);border:1px solid var(--g)}.status{margin:10px 0;color:var(--muted);font-size:12px;min-height:16px}.files{display:grid;gap:8px;margin-top:14px}.file{border:1px solid var(--line);border-radius:12px;padding:11px;display:flex;gap:10px;align-items:center}.file .grow{min-width:0}.name{font-weight:800;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.meta{font-size:10px;color:var(--muted);margin-top:3px}.actions{display:flex;gap:5px}.empty{color:var(--muted);font-size:12px;text-align:center;padding:20px}.danger{color:var(--red)!important;border-color:#efcaca!important}
+</style>
+</head>
+<body>
+<div id="app"><iframe id="adminFrame" src="./index.html" title="CREDENCE Admin"></iframe><button id="storageLaunch" class="storage-launch" disabled>☁️ Storage</button></div>
+<section id="panel" class="panel">
+<div class="head"><div class="grow"><h2>CREDENCE Storage</h2><p>Private Supabase bucket • credence-files</p></div><button class="close" onclick="closePanel()">×</button></div>
+<div class="body">
+<div class="drop"><b>Upload study PDF</b><div class="meta">PDF only • maximum 50 MB</div><input id="file" type="file" accept="application/pdf,.pdf"><div style="margin-top:10px"><button class="btn" onclick="uploadFile()">Upload PDF</button></div></div>
+<div id="status" class="status"></div>
+<div style="display:flex;justify-content:space-between;align-items:center"><b>Stored files</b><button class="btn alt" onclick="loadFiles()">Refresh</button></div>
+<div id="files" class="files"><div class="empty">Login to the Admin panel first.</div></div>
+</div></section>
+<script type="module">
+import {initializeApp} from 'https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js';
+import {getAuth,onAuthStateChanged,getIdToken} from 'https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js';
+const firebaseConfig={apiKey:'AIzaSyCka8C2otBgwXwT2Qtg5bZcPG3J_84Wgs8',authDomain:'credence-76953.firebaseapp.com',projectId:'credence-76953',storageBucket:'credence-76953.firebasestorage.app',messagingSenderId:'973979489973',appId:'1:973979489973:web:ac260b237071f7007050fc'};
+const ADMIN_UID='aBYdbFwbsTUbpmYtoNurxyu3Roj2';
+const SUPABASE_KEY='sb_publishable_ZLU-d0ZI-XT_IgabzmigkA_5vohKjLl';
+const FN='https://tasoycsbzceohgjxizdp.supabase.co/functions/v1/credence-storage';
+const auth=getAuth(initializeApp(firebaseConfig));const launch=document.getElementById('storageLaunch');const panel=document.getElementById('panel');const statusEl=document.getElementById('status');let currentUser=null;
+function setReady(user){currentUser=user&&user.uid===ADMIN_UID?user:null;launch.disabled=!currentUser;launch.title=currentUser?'Open private Supabase Storage':'Login as the authorized CREDENCE admin first';if(!currentUser)closePanel()}
+onAuthStateChanged(auth,setReady);
+function openPanel(){if(!currentUser){statusEl.textContent='Please login as the authorized CREDENCE admin first.';return}panel.classList.add('show');loadFiles()}
+function closePanel(){panel.classList.remove('show')}
+async function token(){if(!currentUser)throw new Error('Please login as the authorized CREDENCE admin first.');return await getIdToken(currentUser,true)}
+async function call(action,file,path){const idToken=await token();const form=new FormData();form.append('action',action);if(file)form.append('file',file);if(path)form.append('path',path);let res;try{res=await fetch(FN,{method:'POST',headers:{Authorization:'Bearer '+idToken,apikey:SUPABASE_KEY},body:form})}catch(e){throw new Error('Could not reach Supabase Storage. Check your internet connection or Edge Function deployment.')};const data=await res.json().catch(()=>({}));if(!res.ok||!data.success)throw new Error(data.error||('Storage request failed ('+res.status+')'));return data}
+async function uploadFile(){const f=document.getElementById('file').files[0];if(!f){statusEl.textContent='Choose a PDF first.';return}if(f.type!=='application/pdf'&&!f.name.toLowerCase().endsWith('.pdf')){statusEl.textContent='Only PDF files are allowed.';return}if(f.size>50*1024*1024){statusEl.textContent='PDF must be 50 MB or smaller.';return}try{statusEl.textContent='Uploading securely…';await call('upload',f);document.getElementById('file').value='';statusEl.textContent='Upload complete.';await loadFiles()}catch(e){statusEl.textContent=e.message}}
+async function loadFiles(){try{statusEl.textContent='';const data=await call('list');const box=document.getElementById('files');if(!data.files?.length){box.innerHTML='<div class="empty">No files uploaded yet.</div>';return}box.innerHTML=data.files.map(x=>`<div class="file"><div>📄</div><div class="grow"><div class="name" title="${esc(x.name)}">${esc(x.name)}</div><div class="meta">${x.metadata?.size?formatBytes(Number(x.metadata.size)):''} • ${x.created_at?new Date(x.created_at).toLocaleString():''}</div></div><div class="actions"><button class="btn alt" onclick="viewFile('${esc(x.name)}')">View</button><button class="btn alt danger" onclick="deleteFile('${esc(x.name)}')">Delete</button></div></div>`).join('')}catch(e){document.getElementById('files').innerHTML='<div class="empty">'+esc(e.message)+'</div>'}}
+async function viewFile(name){try{statusEl.textContent='Creating secure link…';const data=await call('signed',null,'notes/'+name);window.open(data.url,'_blank','noopener');statusEl.textContent='Secure link created (10 minutes).'}catch(e){statusEl.textContent=e.message}}
+async function deleteFile(name){if(!confirm('Delete '+name+'?'))return;try{statusEl.textContent='Deleting…';await call('delete',null,'notes/'+name);statusEl.textContent='Deleted.';await loadFiles()}catch(e){statusEl.textContent=e.message}}
+function formatBytes(n){if(!n)return '';const u=['B','KB','MB','GB'];let i=0;while(n>=1024&&i<u.length-1){n/=1024;i++}return n.toFixed(i?1:0)+' '+u[i]}
+function esc(s){return String(s).replace(/[&<>\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\\"':'&quot;',"'":'&#39;'}[c]))}
+window.openPanel=openPanel;window.closePanel=closePanel;window.uploadFile=uploadFile;window.loadFiles=loadFiles;window.viewFile=viewFile;window.deleteFile=deleteFile;launch.onclick=openPanel;
+</script>
+</body>
+</html>
