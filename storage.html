@@ -22,31 +22,24 @@
 <script type="module">
 import {initializeApp} from 'https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js';
 import {getAuth,onAuthStateChanged,getIdToken} from 'https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js';
-
 const firebaseConfig={apiKey:'AIzaSyCka8C2otBgwXwT2Qtg5bZcPG3J_84Wgs8',authDomain:'credence-76953.firebaseapp.com',projectId:'credence-76953',storageBucket:'credence-76953.firebasestorage.app',messagingSenderId:'973979489973',appId:'1:973979489973:web:ac260b237071f7007050fc'};
 const ADMIN_UID='aBYdbFwbsTUbpmYtoNurxyu3Roj2';
-const FN='https://tasoycsbzceohgjxizdp.supabase.co/functions/v1/credence-storage';
-const auth=getAuth(initializeApp(firebaseConfig));
-const launch=document.getElementById('storageLaunch');
-const panel=document.getElementById('panel');
-const statusEl=document.getElementById('status');
-let currentUser=null;
-
+const SUPABASE_KEY='sb_publishable_ZLU-d0ZI-XT_IgabzmigkA_5vohKjLl';
+const FN='https://tasoycsbzceohgjxizdp.supabase.co/functions/v1/super-handler';
+const auth=getAuth(initializeApp(firebaseConfig)),launch=document.getElementById('storageLaunch'),panel=document.getElementById('panel'),statusEl=document.getElementById('status');let currentUser=null;
 function setReady(user){currentUser=user&&user.uid===ADMIN_UID?user:null;launch.disabled=!currentUser;launch.title=currentUser?'Open private Supabase Storage':'Login as the authorized CREDENCE admin first';if(!currentUser)closePanel()}
 onAuthStateChanged(auth,setReady);
-
 function openPanel(){if(!currentUser){statusEl.textContent='Please login as the authorized CREDENCE admin first.';return}panel.classList.add('show');loadFiles()}
 function closePanel(){panel.classList.remove('show')}
 async function token(){if(!currentUser)throw new Error('Please login as the authorized CREDENCE admin first.');return await getIdToken(currentUser,true)}
-async function call(action,file,path){const idToken=await token();const form=new FormData();form.append('action',action);if(file)form.append('file',file);if(path)form.append('path',path);const res=await fetch(FN,{method:'POST',headers:{Authorization:'Bearer '+idToken},body:form});const data=await res.json().catch(()=>({}));if(!res.ok||!data.success)throw new Error(data.error||('Storage request failed ('+res.status+')'));return data}
+async function call(action,file,path){const idToken=await token();const form=new FormData();form.append('action',action);if(file)form.append('file',file);if(path)form.append('path',path);let res;try{res=await fetch(FN,{method:'POST',headers:{Authorization:'Bearer '+idToken,apikey:SUPABASE_KEY},body:form})}catch(e){throw new Error('Could not reach Supabase Storage. Check the super-handler deployment or CORS settings.')};const data=await res.json().catch(()=>({}));if(!res.ok||!data.success)throw new Error(data.error||('Storage request failed ('+res.status+')'));return data}
 async function uploadFile(){const f=document.getElementById('file').files[0];if(!f){statusEl.textContent='Choose a PDF first.';return}if(f.type!=='application/pdf'&&!f.name.toLowerCase().endsWith('.pdf')){statusEl.textContent='Only PDF files are allowed.';return}if(f.size>50*1024*1024){statusEl.textContent='PDF must be 50 MB or smaller.';return}try{statusEl.textContent='Uploading securely…';await call('upload',f);document.getElementById('file').value='';statusEl.textContent='Upload complete.';await loadFiles()}catch(e){statusEl.textContent=e.message}}
 async function loadFiles(){try{statusEl.textContent='';const data=await call('list');const box=document.getElementById('files');if(!data.files?.length){box.innerHTML='<div class="empty">No files uploaded yet.</div>';return}box.innerHTML=data.files.map(x=>`<div class="file"><div>📄</div><div class="grow"><div class="name" title="${esc(x.name)}">${esc(x.name)}</div><div class="meta">${x.metadata?.size?formatBytes(Number(x.metadata.size)):''} • ${x.created_at?new Date(x.created_at).toLocaleString():''}</div></div><div class="actions"><button class="btn alt" onclick="viewFile('${esc(x.name)}')">View</button><button class="btn alt danger" onclick="deleteFile('${esc(x.name)}')">Delete</button></div></div>`).join('')}catch(e){document.getElementById('files').innerHTML='<div class="empty">'+esc(e.message)+'</div>'}}
 async function viewFile(name){try{statusEl.textContent='Creating secure link…';const data=await call('signed',null,'notes/'+name);window.open(data.url,'_blank','noopener');statusEl.textContent='Secure link created (10 minutes).'}catch(e){statusEl.textContent=e.message}}
 async function deleteFile(name){if(!confirm('Delete '+name+'?'))return;try{statusEl.textContent='Deleting…';await call('delete',null,'notes/'+name);statusEl.textContent='Deleted.';await loadFiles()}catch(e){statusEl.textContent=e.message}}
 function formatBytes(n){if(!n)return '';const u=['B','KB','MB','GB'];let i=0;while(n>=1024&&i<u.length-1){n/=1024;i++}return n.toFixed(i?1:0)+' '+u[i]}
 function esc(s){return String(s).replace(/[&<>\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\\"':'&quot;',"'":'&#39;'}[c]))}
-window.openPanel=openPanel;window.closePanel=closePanel;window.uploadFile=uploadFile;window.loadFiles=loadFiles;window.viewFile=viewFile;window.deleteFile=deleteFile;
-launch.onclick=openPanel;
+window.openPanel=openPanel;window.closePanel=closePanel;window.uploadFile=uploadFile;window.loadFiles=loadFiles;window.viewFile=viewFile;window.deleteFile=deleteFile;launch.onclick=openPanel;
 </script>
 </body>
 </html>
