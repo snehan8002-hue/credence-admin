@@ -1,4 +1,4 @@
-name: Fix Credence auth listener startup order
+name: Fix Credence startup
 on:
   push:
     branches: [main]
@@ -9,27 +9,43 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Move auth listener after Supabase initialization
+      - name: Fix Supabase startup
         run: |
           python - <<'PY'
           from pathlib import Path
           p = Path('index.html')
           s = p.read_text()
-          old = "SB=m.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true}});return true"
-          new = "SB=m.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true}});SB.auth.onAuthStateChange((_,session)=>{s.session=session;session?load():auth()});return true"
+          changed = False
+          old_cdn = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'
+          new_cdn = 'https://esm.sh/@supabase/supabase-js@2'
+          if old_cdn in s:
+              s = s.replace(old_cdn, new_cdn, 1)
+              changed = True
+          old = "SB=m.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true}});SB.auth.onAuthStateChange((_,session)=>{s.session=session;session?load():auth()});return true"
+          new = "SB=m.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true}});return true"
           if old not in s:
-              raise SystemExit('Supabase initialization pattern not found')
-          s = s.replace(old, new, 1)
-          old2 = "SB.auth.onAuthStateChange((_,session)=>{s.session=session;session?load():auth()});load();"
-          if old2 not in s:
-              raise SystemExit('Bottom auth listener pattern not found')
-          s = s.replace(old2, "load();", 1)
+              old_init = "SB=m.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true}});return true"
+              if old_init not in s:
+                  raise SystemExit('Supabase initialization pattern not found')
+          else:
+              s = s.replace(old, new, 1)
+              changed = True
+          bottom = "SB.auth.onAuthStateChange((_,session)=>{s.session=session;session?load():auth()});load();"
+          listener = "SB.auth.onAuthStateChange((_,session)=>{s.session=session;session?load():auth()});"
+          if bottom in s:
+              s = s.replace(bottom, "load();", 1)
+              changed = True
+          elif listener not in s:
+              s = s.replace('</script></body></html>', listener + 'load();\n</script></body></html>', 1)
+              changed = True
           p.write_text(s)
+          print('changed:', changed)
           PY
       - name: Commit fix
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add index.html
-          git commit -m 'Fix Credence auth listener startup order' || exit 0
+          git diff --cached --quiet && exit 0
+          git commit -m 'Fix Credence Supabase startup'
           git push
