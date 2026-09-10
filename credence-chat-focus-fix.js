@@ -1,1 +1,0 @@
-let lastChat=null;new MutationObserver(()=>{const chat=document.querySelector('.cb-chat,.cfx-chat');if(!chat||chat===lastChat)return;lastChat=chat;requestAnimationFrame(()=>{const a=document.activeElement;if(a&&chat.contains(a)&&a.matches('textarea,input'))a.blur()})}).observe(document.body,{childList:true,subtree:true});

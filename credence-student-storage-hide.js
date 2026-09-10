@@ -1,5 +1,0 @@
-import{getApps}from'https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js';import{getAuth,onAuthStateChanged}from'https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js';import{getFirestore,getDoc,doc}from'https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js';
-const app=getApps()[0];if(!app)throw Error('Firebase app not ready');const auth=getAuth(app),db=getFirestore(app);let student=false;
-const remove=()=>{if(!student)return;document.querySelectorAll('[data-storage-center]').forEach(x=>x.remove());document.querySelectorAll('.csb').forEach(x=>{if(x.textContent.trim()==='Storage')x.remove()})};
-const obs=new MutationObserver(remove);obs.observe(document.body,{childList:true,subtree:true});
-onAuthStateChanged(auth,async u=>{student=false;if(!u){remove();return}try{const s=await getDoc(doc(db,'students',u.uid));student=s.exists()&&s.data().active!==false}catch{}remove()});

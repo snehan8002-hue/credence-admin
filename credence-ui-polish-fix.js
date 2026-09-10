@@ -1,1 +1,0 @@
-(()=>{const clean=()=>{document.querySelectorAll('.cfx-chat').forEach(x=>x.remove());document.querySelectorAll('.ui-credit').forEach(x=>x.remove())};clean();new MutationObserver(clean).observe(document.body,{childList:true,subtree:true})})();

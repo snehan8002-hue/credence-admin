@@ -1,1 +1,0 @@
-(()=>{const q=Element.prototype.querySelector;Element.prototype.querySelector=function(s){return s==='[data-s'?q.call(this,'[data-s]'):q.call(this,s)}})();
