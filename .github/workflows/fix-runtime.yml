@@ -1,0 +1,37 @@
+name: Fix Credence runtime startup
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  fix:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Make Supabase loading non-blocking
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text()
+          old="import{createClient}from'https://esm.sh/@supabase/supabase-js@2';const SB=createClient('https://tasoycsbzceohgjxizdp.supabase.co','sb_publishable_ZLU-d0ZI-XT_IgabzmigkA_5vohKjLl',{auth:{persistSession:true,autoRefreshToken:true}});"
+          new="let SB=null;const SUPABASE_URL='https://tasoycsbzceohgjxizdp.supabase.co',SUPABASE_KEY='sb_publishable_ZLU-d0ZI-XT_IgabzmigkA_5vohKjLl';async function initSupabase(){try{const m=await import('https://esm.sh/@supabase/supabase-js@2');SB=m.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true}});return true}catch(e){console.error('CREDENCE Supabase load failed',e);return false}}"
+          if old not in s:
+              raise SystemExit('expected Supabase bootstrap not found')
+          s=s.replace(old,new,1)
+          old2="async function load(){auth();try{let{data:{session}}=await SB.auth.getSession();"
+          new2="async function load(){auth();if(!await initSupabase())return;try{let{data:{session}}=await SB.auth.getSession();"
+          if old2 not in s:
+              raise SystemExit('load pattern not found')
+          s=s.replace(old2,new2,1)
+          p.write_text(s)
+          PY
+      - name: Commit runtime fix
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git commit -m 'Make Credence Supabase startup non-blocking' || exit 0
+          git push
