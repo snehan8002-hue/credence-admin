@@ -1,0 +1,35 @@
+name: Fix Credence auth listener startup order
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Move auth listener after Supabase initialization
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text()
+          old = "SB=m.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true}});return true"
+          new = "SB=m.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true}});SB.auth.onAuthStateChange((_,session)=>{s.session=session;session?load():auth()});return true"
+          if old not in s:
+              raise SystemExit('Supabase initialization pattern not found')
+          s = s.replace(old, new, 1)
+          old2 = "SB.auth.onAuthStateChange((_,session)=>{s.session=session;session?load():auth()});load();"
+          if old2 not in s:
+              raise SystemExit('Bottom auth listener pattern not found')
+          s = s.replace(old2, "load();", 1)
+          p.write_text(s)
+          PY
+      - name: Commit fix
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git commit -m 'Fix Credence auth listener startup order' || exit 0
+          git push
