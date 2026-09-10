@@ -1,0 +1,30 @@
+name: Fix Credence blank page
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch startup
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text()
+          old="async function load(){let{data:{session}}=await SB.auth.getSession();s.session=session;if(!session)return auth();await profile();await settings();await Promise.all([banners(),content(),live()]);await page()}"
+          new="async function load(){auth();try{let{data:{session}}=await SB.auth.getSession();s.session=session;if(!session)return;await profile();await settings();await Promise.all([banners(),content(),live()]);await page()}catch(e){console.error('CREDENCE startup error',e);if(!s.session)auth()}}"
+          if old not in s:
+              raise SystemExit('startup pattern not found')
+          p.write_text(s.replace(old,new,1))
+          PY
+      - name: Commit patch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git commit -m 'Fix Credence startup blank page' || exit 0
+          git push
