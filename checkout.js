@@ -1,31 +1,7 @@
 (() => {
-const URL='https://tasoycsbzceohgjxizdp.supabase.co';
-const KEY='sb_publishable_ZLU-d0ZI-XT_IgabzmigkA_5vohKjLl';
-const ENDPOINT=`${URL}/functions/v1/credence-checkout`;
+const URL='https://tasoycsbzceohgjxizdp.supabase.co',KEY='sb_publishable_ZLU-d0ZI-XT_IgabzmigkA_5vohKjLl',ENDPOINT=`${URL}/functions/v1/credence-checkout`;
 const token=()=>{try{return JSON.parse(localStorage.getItem('credence_session')||'null')?.access_token||''}catch{return ''}};
-const esc=v=>String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
-async function checkout(courseId){
- const t=token();
- if(!t){window.showAuth?.(false);return {ok:false}};
- const btn=document.querySelector(`[data-buy="${CSS.escape(courseId)}"]`); if(btn){btn.disabled=true;btn.textContent='Checking…'}
- try{
-  const r=await fetch(ENDPOINT,{method:'POST',headers:{apikey:KEY,Authorization:`Bearer ${t}`,'Content-Type':'application/json'},body:JSON.stringify({course_id:courseId})});
-  const d=await r.json();
-  if(!r.ok)throw Error(d.error||'Checkout failed');
-  if(d.status==='already_enrolled'||d.status==='enrolled'){
-   window.closeCourse?.();
-   window.CREDENCE_LEARNING?.load();
-   document.getElementById('dashboard')?.classList.remove('hidden');
-   document.getElementById('myLearningGrid')?.scrollIntoView({behavior:'smooth',block:'start'});
-   window.showToast?.('You are enrolled. Start learning! 🎓');
-   return {ok:true};
-  }
-  if(d.status==='payment_required'){
-   window.showToast?.(`Payment gateway setup is required for this ₹${Number(d.amount_inr||0).toLocaleString('en-IN')} course.`);
-   const n=document.getElementById('checkoutNotice');if(n){n.innerHTML=`<b>Payment required</b><br>₹${Number(d.amount_inr||0).toLocaleString('en-IN')} · Secure online payment will be enabled once the CREDENCE payment gateway credentials are configured.`;n.classList.remove('hidden')}
-  }
- }catch(e){window.showToast?.(e.message||'Checkout failed. Please try again.');}
- finally{if(btn){btn.disabled=false;btn.textContent='Buy / Enroll'}}
-}
-window.CREDENCE_CHECKOUT={checkout};
+async function checkout(courseId,btn){const t=token();if(!t){window.showAuth?.(false);return}if(btn){btn.disabled=true;btn.textContent='Checking…'}try{const r=await fetch(ENDPOINT,{method:'POST',headers:{apikey:KEY,Authorization:`Bearer ${t}`,'Content-Type':'application/json'},body:JSON.stringify({course_id:courseId})});const d=await r.json();if(!r.ok)throw Error(d.error||'Checkout failed');if(d.status==='already_enrolled'||d.status==='enrolled'){document.getElementById('courseModal').hidden=true;window.CREDENCE_LEARNING?.load();document.getElementById('dashboard')?.classList.remove('hidden');document.getElementById('myLearningGrid')?.scrollIntoView({behavior:'smooth',block:'start'});alert('You are enrolled. Start learning! 🎓');return}if(d.status==='payment_required'){const n=document.getElementById('checkoutNotice');if(n){n.innerHTML=`<b>Secure payment required</b><br>₹${Number(d.amount_inr||0).toLocaleString('en-IN')} · Razorpay will be connected here after CREDENCE payment credentials are configured.`;n.classList.remove('hidden')}}}catch(e){alert(e.message||'Checkout failed. Please try again.')}finally{if(btn){btn.disabled=false;btn.textContent='Buy / Enroll'}}}
+async function inject(){const modal=document.getElementById('courseModal'),body=document.getElementById('modalBody');if(!modal||modal.hidden||!body||document.getElementById('credenceBuy'))return;const title=body.querySelector('h2')?.textContent?.trim();if(!title)return;const r=await fetch(`${URL}/rest/v1/courses?select=id,title&published=eq.true&title=eq.${encodeURIComponent(title)}&limit=1`,{headers:{apikey:KEY}});if(!r.ok)return;const rows=await r.json();if(!rows[0]||document.getElementById('credenceBuy'))return;const wrap=document.createElement('div');wrap.className='actions';wrap.innerHTML='<button id="credenceBuy">Buy / Enroll</button><div id="checkoutNotice" class="notice hidden"></div>';body.insertBefore(wrap,body.children[1]||body.firstChild);document.getElementById('credenceBuy').onclick=()=>checkout(rows[0].id,document.getElementById('credenceBuy'))}
+window.CREDENCE_CHECKOUT={checkout};new MutationObserver(()=>inject()).observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['hidden']});document.addEventListener('DOMContentLoaded',inject);
 })();
