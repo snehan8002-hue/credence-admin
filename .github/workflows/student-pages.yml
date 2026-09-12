@@ -1,4 +1,4 @@
-name: Deploy CREDENCE Student App
+name: Deploy Unified CREDENCE App
 
 on:
   push:
@@ -27,8 +27,9 @@ jobs:
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
 
-      - name: Verify Student App
+      - name: Verify complete unified app
         run: |
+          set -e
           test -f index.html
           test -f app.js
           test -f auth-fix.js
@@ -38,8 +39,18 @@ jobs:
           test -f student-tests.html
           test -f student-fees.html
           test -f student-reset-password.html
+          test -f admin.html
+          test -f admin-auth.js
+          test -f admin-dashboard.html
+          test -f admin-courses.html
+          test -f admin-media.html
+          test -f admin-quizzes.html
+          test -f admin-certificates.html
+          test -f admin-communications.html
+          test -f admin-support.html
+          test -f reset-password.html
           touch .nojekyll
-          echo "Verified CREDENCE Student App and all student section pages"
+          echo "Verified unified CREDENCE Student + Admin application"
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
