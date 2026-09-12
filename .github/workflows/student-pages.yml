@@ -33,12 +33,15 @@ jobs:
           test -f index.html
           test -f app.js
           test -f auth-fix.js
+
           test -f student-courses.html
           test -f student-videos.html
           test -f student-quizzes.html
           test -f student-tests.html
           test -f student-fees.html
+
           test -f auth.html
+
           test -f admin.html
           test -f admin-auth.js
           test -f admin-dashboard.html
@@ -48,8 +51,11 @@ jobs:
           test -f admin-certificates.html
           test -f admin-communications.html
           test -f admin-support.html
+
           test -f reset-password.html
+
           touch .nojekyll
+
           echo "Verified unified CREDENCE Student + Admin application"
 
       - name: Upload Pages artifact
