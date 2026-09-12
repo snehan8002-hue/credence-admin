@@ -1,0 +1,51 @@
+name: Deploy CREDENCE Student App
+
+on:
+  push:
+    branches: [credence-admin-publish]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Verify Student App
+        run: |
+          test -f index.html
+          test -f app.js
+          test -f auth-fix.js
+          test -f student-courses.html
+          test -f student-videos.html
+          test -f student-quizzes.html
+          test -f student-tests.html
+          test -f student-fees.html
+          test -f student-reset-password.html
+          touch .nojekyll
+          echo "Verified CREDENCE Student App and all student section pages"
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+      - name: Deploy Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
