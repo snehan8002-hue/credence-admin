@@ -38,7 +38,7 @@ jobs:
           test -f student-quizzes.html
           test -f student-tests.html
           test -f student-fees.html
-          test -f student-reset-password.html
+          test -f auth.html
           test -f admin.html
           test -f admin-auth.js
           test -f admin-dashboard.html
