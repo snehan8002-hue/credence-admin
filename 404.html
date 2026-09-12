@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head><meta http-equiv="refresh" content="0; url=./index.html"></head>
+<body>
+<script>
+  // Keep the login token from email
+  const hash = window.location.hash;
+  const search = window.location.search;
+  // If link has admin in it, go to admin.html else index.html
+  if (window.location.href.includes('admin')) {
+    window.location.replace('./admin.html' + hash + search);
+  } else {
+    window.location.replace('./index.html' + hash + search);
+  }
+</script>
+</body>
+</html>
