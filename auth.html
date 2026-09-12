@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Reset Password</title>
-<style>body{font-family:sans-serif;display:flex;justify-content:center;align-items:center;min-height:100vh;background:#f5f5f5;margin:0} .box{background:white;padding:30px;border-radius:12px;box-shadow:0 4px 20px #0001;width:90%;max-width:350px} input{width:100%;padding:12px;margin:10px 0;border:1px solid #ddd;border-radius:8px;box-sizing:border-box} button{width:100%;padding:12px;background:#000;color:white;border:none;border-radius:8px;font-weight:bold;cursor:pointer} #msg{margin-top:15px;text-align:center;font-size:14px;color:#333}</style>
+<style>body{font-family:sans-serif;display:flex;justify-content:center;align-items:center;min-height:100vh;background:#f5f5f5;margin:0}.box{background:white;padding:30px;border-radius:12px;box-shadow:0 4px 20px #0001;width:90%;max-width:350px}input{width:100%;padding:12px;margin:10px 0;border:1px solid #ddd;border-radius:8px;box-sizing:border-box}button{width:100%;padding:12px;background:#000;color:white;border:none;border-radius:8px;font-weight:bold;cursor:pointer}#msg{margin-top:15px;text-align:center;font-size:14px;color:#333}</style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head><body>
 <div class="box"><h3 style="margin:0 0 10px">Set New Password</h3><p style="color:#666;font-size:13px">Enter your new password below</p><input id="pw" type="password" placeholder="New password (min 6 chars)"><button onclick="resetPw()">Update Password</button><p id="msg">Verifying link...</p></div>
 <script>
-const sb = supabase.createClient('https://fofpblqueobdeawwyaep.supabase.co','sb_publishable_3KTR8_rx2JaFQG_gM6bzww_c5BxFsnv');
+const sb = supabase.createClient('https://tasoycsbzceohgjxizdp.supabase.co','sb_publishable_ZLU-d0ZI-XT_IgabzmigkA_5vohKjLl');
 async function resetPw(){
   const pw=document.getElementById('pw').value.trim();
   if(pw.length<6){ document.getElementById('msg').innerText='Password must be 6+ characters'; return; }
@@ -14,9 +14,17 @@ async function resetPw(){
   if(error){ document.getElementById('msg').innerText='❌ '+error.message; }
   else{ document.getElementById('msg').innerText='✅ Password updated! Redirecting...'; setTimeout(()=>location.href='./index.html',2000); }
 }
-sb.auth.onAuthStateChange((event, session)=>{
+sb.auth.onAuthStateChange((event)=>{
   if(event==='PASSWORD_RECOVERY'){ document.getElementById('msg').innerText='Recovery verified. Set new password.'; }
 });
 (async()=>{
   const hash = window.location.hash;
-  if(hash && hash.includes('type
+  if(hash && hash.includes('type=recovery')){
+    document.getElementById('msg').innerText='Recovery verified. Set new password.';
+  } else {
+    const {data} = await sb.auth.getSession();
+    if(!data.session){ document.getElementById('msg').innerText='Link invalid or expired. Request new email.'; }
+    else { document.getElementById('msg').innerText='Session ready. Enter new password.'; }
+  }
+})();
+</script></body></html>
